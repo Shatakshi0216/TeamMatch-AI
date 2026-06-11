@@ -44,7 +44,10 @@ def generate_students(n=60):
         name = names[i]
         # Choose archetype
         archetype = random.choice(["AI/ML", "Frontend", "Backend", "Fullstack"])
+        # Randomly assigns one of the four tech focuses to the student.
         exp = random.choices(experience_levels, weights=[0.25, 0.50, 0.25])[0]
+        # Assigns an experience level, but uses weights (25% chance for Beginner, 
+        # 50% for Intermediate, 25% for Advanced) instead of an equal split.
         
         # Base stats between 2 and 6
         stats = {s: random.randint(2, 6) for s in ["dsa", "backend", "frontend", "ml", "uiux"]}
