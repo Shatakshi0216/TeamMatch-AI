@@ -196,37 +196,8 @@ def seed_database():
     historical_df.to_csv("data/historical_teams.csv", index=False)
     print("Successfully saved 300 historical team trials to 'data/historical_teams.csv'!")
 
-def clean_legacy_files():
-    """Deletes old Streamlit, HTML, CSS, JS and utility directories that are no longer used."""
-    import shutil
-    paths_to_delete = [
-        "assets",
-        "dataset",
-        "pages",
-        "utils",
-        "templates",
-        "static",
-        "cleanup.py",
-        "engine/compatibility_engine.py",
-        "engine/recommendation_engine.py",
-        "engine/skill_gap_analyzer.py",
-        "engine/team_score.py",
-    ]
-    print("\n--- Workspace Cleanup Process ---")
-    for path in paths_to_delete:
-        full_path = os.path.abspath(path)
-        if os.path.exists(full_path):
-            try:
-                if os.path.isdir(full_path):
-                    shutil.rmtree(full_path)
-                    print(f"Removed unused directory: {path}")
-                else:
-                    os.remove(full_path)
-                    print(f"Removed unused file: {path}")
-            except Exception as e:
-                print(f"Could not remove {path}: {e}")
-    print("--- Workspace Cleanup Completed ---\n")
+
 
 if __name__ == "__main__":
-    clean_legacy_files()
+    
     seed_database()
