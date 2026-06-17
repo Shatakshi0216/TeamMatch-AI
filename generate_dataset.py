@@ -1,7 +1,6 @@
 # --- 1. Grabbing the Tools ---
 import random          # Lets us roll the dice and pick random things
 import pandas as pd    # Lets us organize data into clean tables (like Excel)
-import sqlite3         # Lets Python talk to your local database file
 import os              # Lets Python interact with your computer (like making folders)
 
 # Grabs the setup functions you wrote in your other file, database.py
@@ -223,7 +222,11 @@ def seed_database():
     # Wipe the slate clean of mock data, but preserve actual registered users.
     cursor.execute("DELETE FROM students WHERE password_hash IS NULL OR password_hash = ''")
     cursor.execute("DELETE FROM teams")
-    cursor.execute("DELETE FROM sqlite_sequence WHERE name='teams'") # Reset ID counter to 1
+    
+    try:
+        cursor.execute("ALTER SEQUENCE teams_team_id_seq RESTART WITH 1")
+    except Exception:
+        pass
     
     conn.commit() # Save the deletions
     conn.close()  # Close the database door
@@ -245,7 +248,7 @@ def seed_database():
             university, github_url, linkedin_url, project_interests,
             past_hackathon_name, past_hackathon_project, past_hackathon_desc,
             preferred_role, availability
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             s['name'], s['email'], s['password_hash'], s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
             s['experience_level'], s['projects_count'], s['hackathons_count'],
@@ -256,7 +259,7 @@ def seed_database():
         ))
     conn.commit()
     conn.close()
-    print("Successfully seeded 200 developer profiles in SQLite database!")
+    print("Successfully seeded 200 developer profiles in PostgreSQL database!")
     
     print("Generating historical team match trials...")
     historical_df = generate_historical_teams(students, 500) # Generate the 500 test scenarios
