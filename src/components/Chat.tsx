@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { Send, User, MessageSquare, ArrowLeft, Check, Loader2, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -78,7 +79,7 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
     if (!token) return;
     setLoadingConversations(true);
     try {
-      const res = await fetch("/api/conversations", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/conversations`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setConversations(Array.isArray(data) ? data : []);
     } catch (err) { console.error(err); }
@@ -90,7 +91,7 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
     if (!token) return;
     prepend ? setLoadingMore(true) : setLoadingMessages(true);
     try {
-      const res = await fetch(`/api/messages/${roomId}?page=${pageNum}&limit=${PAGE_SIZE}`, {
+      const res = await fetch(`${API_BASE}/api/messages/${roomId}?page=${pageNum}&limit=${PAGE_SIZE}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data: Message[] = await res.json();
@@ -129,7 +130,7 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
     try {
       const ids = activeRoom.split("_").map(Number);
       const receiverId = ids.find(id => id !== userId);
-      const res = await fetch("/api/messages", {
+      const res = await fetch(`${API_BASE}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

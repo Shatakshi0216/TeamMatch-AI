@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -293,7 +294,7 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
       const hackMode = opts?.hackathon ?? hackathonMode;
       const finalSkills = opts?.skills ?? searchSkills;
       const finalInterests = opts?.interests ?? searchInterests;
-      const res = await fetch(`/api/match/${userId}`, {
+      const res = await fetch(`${API_BASE}/api/match/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -321,7 +322,7 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
   const fetchTeamBuilder = async () => {
     setTeamLoading(true); setShowTeam(true);
     try {
-      const res = await fetch(`/api/build-team/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/build-team/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setTeamSuggestion(data);
     } catch (e) { console.error(e); }

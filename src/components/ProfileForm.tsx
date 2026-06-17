@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
 import { Save, User, School, Code, Heart, Briefcase, Star, Github, Linkedin, Mail, Plus, X, Clock, ChevronRight, Lightbulb } from "lucide-react";
@@ -189,7 +190,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile", { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${API_BASE}/api/profile`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
         if (data) {
           setProfile({
@@ -228,7 +229,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
     }
 
     try {
-      const res = await fetch("/api/profile", {
+      const res = await fetch(`${API_BASE}/api/profile`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(profile),

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
 import {
@@ -67,7 +68,7 @@ const Home: React.FC<HomeProps> = ({ setActiveTab }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile", {
+        const res = await fetch(`${API_BASE}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
