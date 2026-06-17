@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join("data", "teammatch.db")
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "data", "teammatch.db"))
 
 def get_db_connection():
     """Returns a connection to the SQLite database."""
@@ -11,7 +11,7 @@ def get_db_connection():
 
 def init_db():
     """Initializes the database tables if they do not exist."""
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -33,7 +33,16 @@ def init_db():
         availability_hours INTEGER DEFAULT 15,
         skills TEXT,
         communication INTEGER NOT NULL,
-        cluster_id INTEGER DEFAULT -1
+        cluster_id INTEGER DEFAULT -1,
+        university TEXT DEFAULT '',
+        github_url TEXT DEFAULT '',
+        linkedin_url TEXT DEFAULT '',
+        project_interests TEXT DEFAULT '',
+        past_hackathon_name TEXT DEFAULT '',
+        past_hackathon_project TEXT DEFAULT '',
+        past_hackathon_desc TEXT DEFAULT '',
+        preferred_role TEXT DEFAULT 'Frontend Developer',
+        availability TEXT DEFAULT 'Looking for team'
     )
     """)
     
@@ -46,6 +55,53 @@ def init_db():
         cursor.execute("ALTER TABLE students ADD COLUMN password_hash TEXT")
     except sqlite3.OperationalError:
         pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN university TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN github_url TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN linkedin_url TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN project_interests TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN past_hackathon_name TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN past_hackathon_project TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN past_hackathon_desc TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN preferred_role TEXT DEFAULT 'Frontend Developer'")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN availability TEXT DEFAULT 'Looking for team'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Create messages table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS messages (
+        message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender_id INTEGER NOT NULL,
+        receiver_id INTEGER NOT NULL,
+        message_text TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
         
     # Create teams table
     cursor.execute("""
@@ -98,13 +154,18 @@ def add_student(s):
     INSERT INTO students (
         name, email, password_hash, dsa, backend, frontend, ml, uiux, 
         experience_level, projects_count, hackathons_count, 
-        availability_hours, skills, communication, cluster_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        availability_hours, skills, communication, cluster_id,
+        university, github_url, linkedin_url, project_interests,
+        past_hackathon_name, past_hackathon_project, past_hackathon_desc,
+        preferred_role, availability
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         s['name'], s.get('email'), s.get('password_hash'), s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
         s['experience_level'], s.get('projects_count', 0), s.get('hackathons_count', 0),
-        s.get('availability_hours', 15), s.get('skills', 'Generalist'), s['communication'],
-        s.get('cluster_id', -1)
+        s.get('availability_hours', 15), s.get('skills', 'Generalist'), s['communication'], s.get('cluster_id', -1),
+        s.get('university', ''), s.get('github_url', ''), s.get('linkedin_url', ''), s.get('project_interests', ''),
+        s.get('past_hackathon_name', ''), s.get('past_hackathon_project', ''), s.get('past_hackathon_desc', ''),
+        s.get('preferred_role', 'Frontend Developer'), s.get('availability', 'Looking for team')
     ))
     conn.commit()
     conn.close()
@@ -117,12 +178,19 @@ def update_student(student_id, s):
     UPDATE students SET 
         name = ?, dsa = ?, backend = ?, frontend = ?, ml = ?, uiux = ?, 
         experience_level = ?, projects_count = ?, hackathons_count = ?, 
-        availability_hours = ?, skills = ?, communication = ?
+        availability_hours = ?, skills = ?, communication = ?,
+        university = ?, github_url = ?, linkedin_url = ?, project_interests = ?,
+        past_hackathon_name = ?, past_hackathon_project = ?, past_hackathon_desc = ?,
+        preferred_role = ?, availability = ?
     WHERE student_id = ?
     """, (
         s['name'], s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
         s['experience_level'], s['projects_count'], s['hackathons_count'],
-        s['availability_hours'], s['skills'], s['communication'], student_id
+        s['availability_hours'], s['skills'], s['communication'],
+        s.get('university', ''), s.get('github_url', ''), s.get('linkedin_url', ''), s.get('project_interests', ''),
+        s.get('past_hackathon_name', ''), s.get('past_hackathon_project', ''), s.get('past_hackathon_desc', ''),
+        s.get('preferred_role', 'Frontend Developer'), s.get('availability', 'Looking for team'),
+        student_id
     ))
     conn.commit()
     conn.close()
@@ -189,3 +257,28 @@ def get_all_metrics():
     metrics = {row['metric_name']: row['metric_value'] for row in cursor.fetchall()}
     conn.close()
     return metrics
+
+def add_message(sender_id, receiver_id, message_text):
+    """Saves a new chat message to the database."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO messages (sender_id, receiver_id, message_text)
+    VALUES (?, ?, ?)
+    """, (sender_id, receiver_id, message_text))
+    conn.commit()
+    conn.close()
+
+def get_messages(user1_id, user2_id):
+    """Retrieves message history between two candidates."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT * FROM messages 
+    WHERE (sender_id = ? AND receiver_id = ?) 
+       OR (sender_id = ? AND receiver_id = ?)
+    ORDER BY timestamp ASC
+    """, (user1_id, user2_id, user2_id, user1_id))
+    messages = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return messages

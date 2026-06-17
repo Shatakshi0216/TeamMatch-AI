@@ -9,31 +9,37 @@ from database import init_db, get_db_connection
 
 
 # --- 2. Manufacturing the Fake Users ---
-def generate_students(n=60):
-    # This is our factory line. If we don't give it a number, it makes 60 fake users.
+def generate_students(n=200):
+    # This is our factory line. If we don't give it a number, it makes 200 fake users.
     
-    # A massive list of 50 hardcoded names to use as a starter pack
-    names = [
-        "Aarav Mehta", "Aditi Sharma", "Akash Patel", "Ananya Iyer", "Amit Verma", 
-        "Anjali Rao", "Arjun Nair", "Devendra Singh", "Divya Kulkarni", "Gaurav Joshi",
-        "Ishaan Gupta", "Karan Johar", "Kavita Reddy", "Manish Pandey", "Meera Sen",
-        "Nikhil Deshmukh", "Nisha Saxena", "Pooja Hegde", "Pranav Shah", "Priya Mishra",
-        "Rahul Dravid", "Rohan Gavaskar", "Siddharth Malhotra", "Sneha Patil", "Tarun Khanna",
-        "Vikram Seth", "Yash Birla", "Aishwarya Roy", "Deepak Padukone", "Hrithik Roshan",
-        "Kareena Kapoor", "Ranbir Kapoor", "Salman Khan", "Shahrukh Khan", "Varun Dhawan",
-        "Alia Bhatt", "Katrina Kaif", "Priyanka Chopra", "Ranveer Singh", "Tiger Shroff",
-        "Sanjay Dutt", "Sunny Deol", "Bobby Deol", "Juhi Chawla", "Madhuri Dixit",
-        "Kajol Devgan", "Karisma Kapoor", "Rani Mukerji", "Preity Zinta", "Saif Ali Khan"
+    first_names = [
+        "Aarav", "Aditi", "Akash", "Ananya", "Amit", "Anjali", "Arjun", "Devendra", "Divya", "Gaurav",
+        "Ishaan", "Kavita", "Manish", "Meera", "Nikhil", "Nisha", "Pranav", "Priya", "Sneha", "Tarun",
+        "Vikram", "Rajesh", "Sunita", "Ramesh", "Sandeep", "Vivek", "Neha", "Manoj", "Ritu", "Swati",
+        "Harish", "Kiran", "Deepak", "Sanjay", "Abhinav", "Jyoti", "Suresh", "Vijay", "Preeti", "Rohan",
+        "Shalini", "Vinay", "Shreya", "Mohit", "Rashmi", "Kartik", "Tanvi", "Vikas", "Pooja", "Yash",
+        "Rahul", "Ajay", "Amrita", "Vinod", "Anil", "Sunil", "Deepa", "Dinesh", "Geeta", "Gopal",
+        "Hema", "Jitendra", "Kishore", "Lalita", "Madan", "Maya", "Mahesh", "Naresh", "Prem", "Sarita",
+        "Sarika", "Anupam", "Ketan", "Payal", "Rakesh", "Sonia", "Tarika", "Umesh", "Varun", "Yogesh"
+    ]
+    last_names = [
+        "Mehta", "Sharma", "Patel", "Iyer", "Verma", "Rao", "Nair", "Singh", "Kulkarni", "Joshi",
+        "Gupta", "Reddy", "Pandey", "Sen", "Deshmukh", "Saxena", "Shah", "Mishra", "Patil", "Khanna",
+        "Seth", "Kumar", "Yadav", "Tripathy", "Deshpande", "Choudhary", "Prasad", "Bose", "Das", "Vardhan",
+        "Jha", "Acharya", "Chakraborty", "Bannerjee", "Pillai", "Menon", "Shenoy", "Hegde", "Bhat", "Prabhu",
+        "Gowda", "Naidu", "Sinha", "Trivedi", "Pathak", "Dubey", "Dwivedi", "Chatterjee", "Dutt", "Malhotra"
     ]
     
-    # If we ask for 60 students but only have 50 names, this loop just tacks on 
-    # generic names like "Developer 51", "Developer 52", etc., until we hit our target.
+    # Generate all unique combinations (80 * 50 = 4000 possible names)
+    all_combinations = [f"{first} {last}" for first in first_names for last in last_names]
+    random.shuffle(all_combinations)
+    
+    # Select the first n names
+    names = all_combinations[:n]
+    
     while len(names) < n:
         names.append(f"Developer {len(names) + 1}")
         
-    # Shuffle the list of names like a deck of cards so it's random every time
-    random.shuffle(names)
-    
     experience_levels = ["Beginner", "Intermediate", "Advanced"]
     
     # A cheat sheet. If someone is assigned a major (like AI/ML), this gives them the right text labels.
@@ -84,6 +90,38 @@ def generate_students(n=60):
         hacks = random.randint(0, 4)
         avail = random.choice([10, 15, 20, 25, 30, 35])
         
+        # Generate extra details
+        first_name = name.split(" ")[0].lower()
+        last_name = name.split(" ")[1].lower() if " " in name else "dev"
+        email = f"{first_name}.{last_name}{i}@university.edu"
+        university = random.choice([
+            "IIT Bombay", "IIT Delhi", "BITS Pilani", "Delhi Technological University",
+            "VIT Vellore", "IIIT Hyderabad", "Manipal Institute of Technology", "NSUT Delhi"
+        ])
+        github_url = f"https://github.com/{first_name}{i}"
+        linkedin_url = f"https://linkedin.com/in/{first_name}-{last_name}-{i}"
+        
+        # Select 1 to 3 random interests
+        interest_pool = ["AI", "Web3", "HealthTech", "FinTech", "EdTech", "IoT", "SaaS", "Security"]
+        num_ints = random.randint(1, 3)
+        ints = random.sample(interest_pool, num_ints)
+        project_interests = ", ".join(ints)
+        
+        # Select preferred role
+        if archetype == "AI/ML":
+            preferred_role = random.choice(["AI Engineer", "Algorithm Specialist"])
+        elif archetype == "Frontend":
+            preferred_role = random.choice(["Frontend Developer", "UI/UX Designer"])
+        elif archetype == "Backend":
+            preferred_role = random.choice(["Backend Developer", "Algorithm Specialist"])
+        else: # Fullstack
+            preferred_role = random.choice(["Frontend Developer", "Backend Developer"])
+            
+        availability = random.choices(
+            ["Available", "Busy", "Looking for team"],
+            weights=[0.60, 0.10, 0.30]
+        )[0]
+        
         # Pack all this data into a dictionary and drop it in the students bucket
         students.append({
             "name": name,
@@ -98,7 +136,15 @@ def generate_students(n=60):
             "availability_hours": avail,
             "skills": skills,
             "communication": comm,
-            "cluster_id": -1 # Blank placeholder. The ML model will fill this in later.
+            "cluster_id": -1, # Blank placeholder. The ML model will fill this in later.
+            "email": email,
+            "password_hash": None,
+            "university": university,
+            "github_url": github_url,
+            "linkedin_url": linkedin_url,
+            "project_interests": project_interests,
+            "preferred_role": preferred_role,
+            "availability": availability
         })
         
     return students # Spit out the full bucket of 60 people
@@ -174,9 +220,8 @@ def seed_database():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Wipe the slate clean. Delete any old students or teams from previous runs.
-    cursor.execute("DELETE FROM students")
-    cursor.execute("DELETE FROM sqlite_sequence WHERE name='students'") # Reset ID counter to 1
+    # Wipe the slate clean of mock data, but preserve actual registered users.
+    cursor.execute("DELETE FROM students WHERE password_hash IS NULL OR password_hash = ''")
     cursor.execute("DELETE FROM teams")
     cursor.execute("DELETE FROM sqlite_sequence WHERE name='teams'") # Reset ID counter to 1
     
@@ -184,37 +229,46 @@ def seed_database():
     conn.close()  # Close the database door
     
     print("Generating profiles...")
-    students = generate_students(60) # Generate the 60 fake people
+    students = generate_students(200) # Generate the 200 fake people
     
     # Re-open the door to insert the new data
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Loop through the 60 people and shove them permanently into the database
+    # Loop through the people and shove them permanently into the database
     for s in students:
         cursor.execute("""
         INSERT INTO students (
-            name, dsa, backend, frontend, ml, uiux, 
+            name, email, password_hash, dsa, backend, frontend, ml, uiux, 
             experience_level, projects_count, hackathons_count, 
-            availability_hours, skills, communication, cluster_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            availability_hours, skills, communication, cluster_id,
+            university, github_url, linkedin_url, project_interests,
+            past_hackathon_name, past_hackathon_project, past_hackathon_desc,
+            preferred_role, availability
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            s['name'], s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
+            s['name'], s['email'], s['password_hash'], s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
             s['experience_level'], s['projects_count'], s['hackathons_count'],
-            s['availability_hours'], s['skills'], s['communication'], s['cluster_id']
+            s['availability_hours'], s['skills'], s['communication'], s['cluster_id'],
+            s['university'], s['github_url'], s['linkedin_url'], s['project_interests'],
+            '', '', '',
+            s['preferred_role'], s['availability']
         ))
     conn.commit()
     conn.close()
-    print("Successfully seeded 60 developer profiles in SQLite database!")
+    print("Successfully seeded 200 developer profiles in SQLite database!")
     
     print("Generating historical team match trials...")
-    historical_df = generate_historical_teams(students, 300) # Generate the 300 test scenarios
+    historical_df = generate_historical_teams(students, 500) # Generate the 500 test scenarios
     
-    os.makedirs("data", exist_ok=True) # Check if 'data' folder exists. If not, make it.
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    data_dir = os.path.join(base_dir, "data")
+    os.makedirs(data_dir, exist_ok=True)
+    csv_path = os.path.join(data_dir, "historical_teams.csv")
     
     # Save that Excel-like table of teams as a CSV file in the data folder
-    historical_df.to_csv("data/historical_teams.csv", index=False)
-    print("Successfully saved 300 historical team trials to 'data/historical_teams.csv'!")
+    historical_df.to_csv(csv_path, index=False)
+    print(f"Successfully saved 500 historical team trials to '{csv_path}'!")
 
     
     

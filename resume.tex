@@ -1,0 +1,130 @@
+\documentclass[8pt,letterpaper]{article}
+
+% Ensure that generated PDF is machine readable/ATS parsable
+\pdfgentounicode=1
+\input{glyphtounicode}
+
+% ===== One-page, ATS-safe, keeps full content =====
+\usepackage[margin=0.45in, top=0.42in, bottom=0.44in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{ragged2e}
+
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=black}
+\pagestyle{empty}
+
+\linespread{0.95}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\tabcolsep}{4pt}
+
+% Section style
+\titleformat{\section}{\bfseries\normalsize}{}{0pt}{}[\vspace{2pt}\titlerule]
+\titlespacing{\section}{0pt}{4pt}{2pt}
+
+% Bullet & list spacing - adjusted for a clean, single-page fit
+\setlist[itemize]{itemsep=-1pt, topsep=1.5pt, parsep=0pt, partopsep=0pt, leftmargin=10pt, label=\textbullet}
+
+% Consistent left-aligned dates (same start position)
+\newcommand{\daterow}[2]{%
+  \noindent\begin{tabularx}{\textwidth}{@{}X >{\raggedright\arraybackslash}p{3.6cm}@{}}%
+  \textbf{#1} & \emph{#2}\\
+  \end{tabularx}%
+}
+
+\begin{document}
+
+% =================== HEADER ===================
+\begin{center}
+{\Large \textbf{Ankit Prajapat}}\\[-1pt]
+\href{mailto:akprajapat1824@gmail.com}{akprajapat1824@gmail.com} \,|\, 
+\href{https://www.linkedin.com/in/ankit-prajapat/}{www.linkedin.com/in/ankit-prajapat/} \,|\, 
+\href{https://github.com/ankit1824}{github.com/ankit1824}\\[0pt]
++91 9893782908 \,|\, Indore, MP
+\end{center}
+
+% =================== EDUCATION ===================
+\section{Education}
+
+\daterow{Maulana Azad National Institute of Technology -- Bhopal}{Aug 2023 -- Jun 2027}\\[-2pt]
+Bachelor of Technology in Electronics and Communication Engineering $|$ CGPA: \textbf{8.85}\\[2pt]
+\noindent\begin{tabularx}{\textwidth}{@{}X >{\raggedright\arraybackslash}p{3.6cm}@{}}%
+Minor Specialization in Computer Science Engineering & \emph{Jul 2024 -- Jun 2027}\\%
+\end{tabularx}\\[4pt]
+\daterow{Excellent Academy (MP Board) -- Indore, MP}{Apr 2021 -- Apr 2022}\\[-2pt]
+Class 12th $|$ Percentage: \textbf{87.6\%}
+
+% =================== TECHNICAL SKILLS ===================
+\section{Technical Skills}
+
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}l X@{}}
+Languages & C, C++, SQL, JavaScript, Python \\
+
+Frontend Technologies & React.js, Redux Toolkit, TypeScript, HTML, CSS, Tailwind CSS, Bootstrap \\
+
+Backend \& Databases & Node.js, Express.js, FastAPI, REST APIs, MongoDB, MySQL, JWT \\
+
+CS Fundamentals & Object-Oriented Programming (OOPs), DBMS, Operating Systems, Machine Learning \\
+
+Tools \& Platforms & Git, GitHub, VS Code, Cursor, Jupyter Notebook, Vercel, Render \\
+\end{tabularx}
+
+% =================== PROJECTS ===================
+\section{Projects} 
+
+\textbf{TeamMatch AI -- ML Teammate Matcher \& Analyzer} \hfill \href{https://github.com/ankit1824/TeamMatch-AI}{GitHub} $|$ \href{https://team-match-ai-xi.vercel.app/}{Live}\\
+Developed a full-stack teammate matchmaking and grouping platform using \textbf{React}, \textbf{FastAPI}, and \textbf{SQLite} to assemble balanced project teams. Engineered a \textbf{complementary recommendation engine} using \textbf{K-Nearest Neighbors (KNN)} on an 8D normalized profile vector space utilizing Cosine Distance metrics on inverted skills. Built a team diagnostics pipeline using \textbf{K-Means Clustering} for developer archetype categorization and computed a \textbf{Role Diversity Score}.
+
+\vspace{3pt}
+
+\textbf{AI Course Architect -- Personalized Learning Platform} \hfill \href{https://github.com/ankit1824/AI-Course-Architect}{GitHub} $|$ \href{https://skillsurgefinal.vercel.app/}{Live}\\
+Built an AI-powered learning platform using \textbf{React}, \textbf{TypeScript}, and the \textbf{Google Gemini API} to generate \textbf{personalized course roadmaps}. Implemented \textbf{dynamic content rendering} with \textbf{React Markdown} and designed a responsive UI using \textbf{Tailwind CSS}.
+
+\vspace{3pt}
+
+\textbf{E-commerce Database System (SQL)} \hfill \href{https://github.com/ankit1824/E-commerce-DB}{GitHub}\\
+Designed a \textbf{normalized MySQL database} (15+ tables) using \textbf{ER modeling}, \textbf{primary/foreign keys}, and \textbf{many-to-many relationships}. Wrote complex \textbf{SQL queries} with \textbf{JOINs}, \textbf{aggregations}, and \textbf{subqueries} for order tracking and analytics.
+
+% =================== POR ===================
+\section{Positions of Responsibility}
+
+\textbf{Senior Executive, Robotics Club -- MANIT} \hfill \textit{May 2024 -- Present}
+\begin{itemize}
+    \item Co-organized flagship technical events (Automax, Makeathon, Roborace) attracting \textbf{500+} participants, managing cross-team coordination and event logistics.
+    \item Led technical demonstrations of microcontrollers and sensor integration (Arduino, ESP32) for \textbf{50+} first-year students, fostering hands-on learning.
+    \item Supported arena hardware configurations, signal checking, and diagnostic troubleshooting for competition systems.
+\end{itemize}
+\vspace{2.5pt}
+\textbf{Member, Training and Placement Cell -- MANIT} \hfill \textit{Feb 2026 -- Present}
+\begin{itemize}
+    \item Researched and compiled a database of \textbf{200+} corporate HR contacts from LinkedIn to streamline outreach for student internships and full-time drives.
+    \item Managed logistics and registration coordination for \textbf{300+} students during online assessments, scheduling, and interview shortlists.
+    \item Facilitated communication of timelines and policy compliance to students, ensuring high participation rates during the placement season.
+\end{itemize}
+\vspace{2.5pt}
+\textbf{Class Representative, ECE Department -- MANIT} \hfill \textit{Aug 2024 -- May 2025}
+\begin{itemize}
+    \item Represented a cohort of \textbf{80+} ECE students, serving as the primary liaison to faculty and administration for academic coordination.
+    \item Streamlined academic communications (timetables, exam schedules, assignments) using digital channels to ensure timely student responses.
+    \item Consolidated student feedback on course pace and curriculum to resolve academic disputes and align educational goals.
+\end{itemize}
+
+% =================== ACHIEVEMENTS ===================
+\section{Achievements}
+\vspace{2.5pt}
+\begin{itemize}[itemsep=2.5pt]
+  \item Solved \textbf{600+} Data Structures and Algorithms (DSA) problems, strengthening expertise in dynamic programming, graphs, trees, and greedy algorithms.
+  \item Competitive Programming Ratings: 
+  \href{https://leetcode.com/u/ankitp_18/}{LeetCode} (Peak Rating: \textbf{2007}, Knight), 
+  \href{https://www.codechef.com/users/ankitp_18}{CodeChef} (Peak Rating: \textbf{1823}, 4-Star), and 
+  \href{https://codeforces.com/profile/Ankit_Prajapat}{Codeforces} (Peak Rating: \textbf{1567}, Specialist).
+  \item Secured a \textbf{Top 3} rank at Kriyeta 4.0, a state-level hackathon held at AITR, Indore, competing against 50+ teams.
+\end{itemize}
+
+\end{document}
