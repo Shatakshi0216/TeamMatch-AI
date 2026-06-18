@@ -7,7 +7,7 @@ import uvicorn
 from database import (
     init_db, get_all_students, add_student, get_all_teams, 
     add_team, delete_team, get_student_by_email, update_student,
-    add_message, get_messages, get_db_connection
+    add_message, get_messages, get_db_connection, execute_query
 )
 from engine.ml_pipeline import (
     get_recommendations, calculate_ml_team_health, get_ml_team_recommendations
@@ -32,6 +32,20 @@ init_db()
 def hash_password(password: str) -> str:
     """Hashes the password with SHA-256 for basic security validation."""
     return hashlib.sha256(password.encode()).hexdigest()
+
+def is_admin_user(student) -> bool:
+    """Checks if a student is a platform administrator."""
+    if not student:
+        return False
+    email = student.get("email", "").strip().lower()
+    admin_emails_env = os.environ.get("ADMIN_EMAILS", "")
+    if admin_emails_env:
+        emails = [e.strip().lower() for e in admin_emails_env.split(",") if e.strip()]
+        if email in emails:
+            return True
+    if email.endswith("@teammatch.ai") or email == "admin@example.com" or email == "admin@gmail.com":
+        return True
+    return False
 
 def infer_skills_ratings(skills_list):
     """Infers 1-10 skill ratings from TeamMatch AI's text skill tags."""
@@ -72,8 +86,7 @@ def infer_skills_ratings(skills_list):
 
 def get_student_by_id(student_id: int):
     """Retrieves student profile by id."""
-    students = get_all_students()
-    return next((s for s in students if s['student_id'] == student_id), None)
+    return execute_query("SELECT * FROM students WHERE student_id = ?", (student_id,), fetch_one=True)
 
 def get_user_id_from_header(request: Request) -> int:
     """Extracts mock user ID (student_id) from Authorization Bearer header."""
@@ -348,6 +361,7 @@ async def api_get_profile(request: Request):
         "full_name": student['name'],
         "college": student['university'],
         "contact_email": student['email'],
+        "phone": student.get('phone', ''),
         "github_link": student['github_url'],
         "linkedin_link": student['linkedin_url'],
         "skills": [s.strip() for s in student['skills'].split(",") if s.strip()] if student['skills'] else [],
@@ -357,7 +371,8 @@ async def api_get_profile(request: Request):
         "availability": student.get('availability', 'Looking for team'),
         "past_hackathon": student.get('past_hackathon_name', ''),
         "past_project_name": student.get('past_hackathon_project', ''),
-        "past_project_desc": student.get('past_hackathon_desc', '')
+        "past_project_desc": student.get('past_hackathon_desc', ''),
+        "is_admin": is_admin_user(student)
     }
 
 @app.post("/api/profile")
@@ -396,7 +411,8 @@ async def api_post_profile(request: Request):
         "past_hackathon_project": data.get('past_project_name', ''),
         "past_hackathon_desc": data.get('past_project_desc', ''),
         "preferred_role": data.get('preferred_role', 'Frontend Developer'),
-        "availability": avail_status
+        "availability": avail_status,
+        "phone": data.get('phone', '')
     }
     
     update_student(user_id, student_profile)
@@ -411,8 +427,12 @@ async def api_match(userId: int, request: Request):
     hackathon_mode = data.get('hackathonMode', False)
     search_skills = data.get('searchSkills', '')
     search_ints = data.get('searchInterests', '')
+    search_college = data.get('searchCollege', '')
     
     recs = get_recommendations(userId, top_n=50, metric='cosine')
+    
+    my_student = get_student_by_id(userId)
+    my_skills = [s.strip().lower() for s in my_student['skills'].split(",") if s.strip()] if my_student and my_student['skills'] else []
     
     matched = []
     for r in recs:
@@ -422,6 +442,12 @@ async def api_match(userId: int, request: Request):
         if hackathon_mode and cand.get('availability', 'Looking for team') == 'Busy':
             continue
             
+        if search_college:
+            search_colleges_list = [c.strip().lower() for c in search_college.split(",") if c.strip()]
+            cand_univ = (cand.get('university') or '').strip().lower()
+            if search_colleges_list and not any(sc in cand_univ for sc in search_colleges_list):
+                continue
+                
         cand_skills = [s.strip() for s in cand['skills'].split(",") if s.strip()] if cand['skills'] else []
         cand_ints = [i.strip() for i in cand['project_interests'].split(",") if i.strip()] if cand['project_interests'] else []
         
@@ -435,8 +461,6 @@ async def api_match(userId: int, request: Request):
             if not any(any(it in ci.lower() for ci in cand_ints) for it in search_ints_list):
                 continue
         
-        my_student = get_student_by_id(userId)
-        my_skills = [s.strip().lower() for s in my_student['skills'].split(",") if s.strip()] if my_student and my_student['skills'] else []
         common_skills = [s for s in cand_skills if s.lower() in my_skills]
         
         matched.append({
@@ -444,6 +468,7 @@ async def api_match(userId: int, request: Request):
             "full_name": cand['name'],
             "college": cand['university'],
             "contact_email": cand['email'],
+            "phone": cand.get('phone', ''),
             "github_link": cand['github_url'],
             "linkedin_link": cand['linkedin_url'],
             "skills": cand_skills,
@@ -495,6 +520,7 @@ async def api_build_team(userId: int, request: Request):
             "full_name": cand['name'],
             "college": cand['university'],
             "contact_email": cand['email'],
+            "phone": cand.get('phone', ''),
             "github_link": cand['github_url'],
             "linkedin_link": cand['linkedin_url'],
             "skills": cand_skills,
@@ -516,45 +542,38 @@ async def api_get_conversations(request: Request):
     """Lists conversations with latest messages for authenticated student."""
     user_id = get_user_id_from_header(request)
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT DISTINCT
-            CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as other_id
-        FROM messages
-        WHERE sender_id = ? OR receiver_id = ?
-    """, (user_id, user_id, user_id))
-    other_ids = [row['other_id'] for row in cursor.fetchall()]
+    rows = execute_query("""
+        WITH last_messages AS (
+            SELECT DISTINCT ON (
+                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END
+            )
+                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as other_id,
+                message_text,
+                timestamp,
+                sender_id
+            FROM messages
+            WHERE sender_id = ? OR receiver_id = ?
+            ORDER BY 
+                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END,
+                timestamp DESC
+        )
+        SELECT lm.other_id, lm.message_text, lm.timestamp, lm.sender_id, s.name, s.university, s.email
+        FROM last_messages lm
+        JOIN students s ON s.student_id = lm.other_id
+        ORDER BY lm.timestamp DESC
+    """, (user_id, user_id, user_id, user_id, user_id), fetch_all=True)
     
     conversations = []
-    for oid in other_ids:
-        cursor.execute("""
-            SELECT message_text, timestamp, sender_id
-            FROM messages
-            WHERE (sender_id = ? AND receiver_id = ?)
-               OR (sender_id = ? AND receiver_id = ?)
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """, (user_id, oid, oid, user_id))
-        last_msg = cursor.fetchone()
-        if not last_msg:
-            continue
+    if rows:
+        for row in rows:
+            conversations.append({
+                "room_id": f"{min(user_id, row['other_id'])}_{max(user_id, row['other_id'])}",
+                "other_user_name": row['name'],
+                "other_user_id": str(row['other_id']),
+                "last_message": row['message_text'],
+                "last_timestamp": row['timestamp']
+            })
             
-        cursor.execute("SELECT student_id, name, university, email FROM students WHERE student_id = ?", (oid,))
-        other_student = cursor.fetchone()
-        if not other_student:
-            continue
-            
-        conversations.append({
-            "room_id": f"{min(user_id, oid)}_{max(user_id, oid)}",
-            "other_user_name": other_student['name'],
-            "other_user_id": str(oid),
-            "last_message": last_msg['message_text'],
-            "last_timestamp": last_msg['timestamp']
-        })
-    
-    conn.close()
-    conversations.sort(key=lambda x: x['last_timestamp'], reverse=True)
     return conversations
 
 @app.get("/api/messages/{room_id}")
@@ -568,11 +587,8 @@ async def api_get_room_messages(room_id: str, request: Request):
         
     msgs = get_messages(u1, u2)
     
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT student_id, name FROM students WHERE student_id IN (?, ?)", (u1, u2))
-    names = {row['student_id']: row['name'] for row in cursor.fetchall()}
-    conn.close()
+    names_rows = execute_query("SELECT student_id, name FROM students WHERE student_id IN (?, ?)", (u1, u2), fetch_all=True)
+    names = {row['student_id']: row['name'] for row in names_rows} if names_rows else {}
     
     formatted_msgs = []
     for m in msgs:
@@ -585,6 +601,67 @@ async def api_get_room_messages(room_id: str, request: Request):
             "timestamp": m['timestamp']
         })
     return formatted_msgs
+
+@app.get("/api/hackathons")
+async def api_get_hackathons():
+    """Retrieves all upcoming hackathons from the database."""
+    try:
+        from database import get_all_hackathons
+        events = get_all_hackathons()
+        # Format tags back into arrays
+        formatted = []
+        for h in events:
+            formatted.append({
+                "id": h["id"],
+                "name": h["name"],
+                "organizer": h["organizer"],
+                "date": h["date"],
+                "location": h["location"],
+                "prize": h["prize"],
+                "description": h["description"],
+                "tags": [t.strip() for t in h["tags"].split(",") if t.strip()] if h["tags"] else [],
+                "interestFilter": h["interest_filter"]
+            })
+        return formatted
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/hackathons")
+async def api_add_hackathon(request: Request):
+    """Submits a new hackathon event to the database."""
+    try:
+        from database import add_hackathon
+        import uuid
+        
+        user_id = get_user_id_from_header(request)
+        student = get_student_by_id(user_id)
+        if not student or not is_admin_user(student):
+            raise HTTPException(status_code=403, detail="Access denied. Only platform administrators can add hackathons.")
+            
+        data = await request.json()
+        if not data or not data.get('name'):
+            raise HTTPException(status_code=400, detail="Hackathon Name is required.")
+            
+        # Generate clean ID/slug
+        slug = "".join(c.lower() for c in data['name'] if c.isalnum() or c.isspace()).strip().replace(" ", "-")
+        h_id = f"{slug}-{uuid.uuid4().hex[:6]}"
+        
+        hackathon_profile = {
+            "id": h_id,
+            "name": data['name'],
+            "organizer": data.get('organizer', ''),
+            "date": data.get('date', ''),
+            "location": data.get('location', ''),
+            "prize": data.get('prize', ''),
+            "description": data.get('description', ''),
+            "tags": data.get('tags', ''),
+            "interest_filter": data.get('interestFilter', 'AI')
+        }
+        
+        add_hackathon(hackathon_profile)
+        return {"success": True, "id": h_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == '__main__':
     uvicorn.run("app:app", host="127.0.0.1", port=5000, reload=True, reload_dirs=[os.path.dirname(os.path.abspath(__file__))])

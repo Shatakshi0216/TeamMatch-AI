@@ -75,21 +75,23 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
   const activeRoomRef = useRef<string | null>(null);
 
   // ── Fetch conversations ─────────────────────────────────────────────────────
-  const fetchConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async (silent = false) => {
     if (!token) return;
-    setLoadingConversations(true);
+    if (!silent) setLoadingConversations(true);
     try {
       const res = await fetch(`${API_BASE}/api/conversations`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setConversations(Array.isArray(data) ? data : []);
     } catch (err) { console.error(err); }
-    finally { setLoadingConversations(false); }
+    finally { if (!silent) setLoadingConversations(false); }
   }, [token]);
 
   // ── Load messages (paginated) ───────────────────────────────────────────────
-  const fetchMessages = useCallback(async (roomId: string, pageNum: number, prepend = false) => {
+  const fetchMessages = useCallback(async (roomId: string, pageNum: number, prepend = false, silent = false) => {
     if (!token) return;
-    prepend ? setLoadingMore(true) : setLoadingMessages(true);
+    if (!silent) {
+      prepend ? setLoadingMore(true) : setLoadingMessages(true);
+    }
     try {
       const res = await fetch(`${API_BASE}/api/messages/${roomId}?page=${pageNum}&limit=${PAGE_SIZE}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -111,7 +113,11 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
         }, 50);
       }
     } catch (err) { console.error(err); }
-    finally { prepend ? setLoadingMore(false) : setLoadingMessages(false); }
+    finally { 
+      if (!silent) {
+        prepend ? setLoadingMore(false) : setLoadingMessages(false); 
+      }
+    }
   }, [token]);
 
   // ── Load more (scroll up) ───────────────────────────────────────────────────
@@ -174,14 +180,14 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
     if (!activeRoom) return;
     fetchMessages(activeRoom, 0);
     const interval = setInterval(() => {
-      fetchMessages(activeRoom, 0);
+      fetchMessages(activeRoom, 0, false, true);
     }, 3000);
     return () => clearInterval(interval);
   }, [activeRoom, fetchMessages]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchConversations();
+      fetchConversations(true);
     }, 8000);
     return () => clearInterval(interval);
   }, [fetchConversations]);

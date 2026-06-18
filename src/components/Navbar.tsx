@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-import { LogOut, User, Search, PlusCircle, LayoutDashboard, MessageSquare, HelpCircle } from "lucide-react";
+import { LogOut, User, Search, PlusCircle, LayoutDashboard, MessageSquare, HelpCircle, Calendar } from "lucide-react";
 
 interface NavbarProps {
   activeTab: string;
@@ -8,13 +8,13 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
-  const { logout } = useAuth();
+  const logout = useAuth().logout;
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "profile", label: "Profile", icon: User },
     { id: "find-teammates", label: "Find Teammates", icon: Search },
-    { id: "chat", label: "Chat", icon: MessageSquare },
+    { id: "hackathons", label: "Upcoming Hackathons", icon: Calendar },
     { id: "help", label: "Help", icon: HelpCircle },
   ];
 

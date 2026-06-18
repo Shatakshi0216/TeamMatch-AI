@@ -94,8 +94,11 @@ def generate_students(n=200):
         last_name = name.split(" ")[1].lower() if " " in name else "dev"
         email = f"{first_name}.{last_name}{i}@university.edu"
         university = random.choice([
-            "IIT Bombay", "IIT Delhi", "BITS Pilani", "Delhi Technological University",
-            "VIT Vellore", "IIIT Hyderabad", "Manipal Institute of Technology", "NSUT Delhi"
+            "IIT Bombay", "IIT Delhi", "IIT Madras", "IIT Kharagpur", "IIT Kanpur",
+            "IIT Roorkee", "IIT Guwahati", "IIT Hyderabad", "NIT Trichy", "NIT Surathkal",
+            "NIT Rourkela", "NIT Warangal", "NIT Calicut", "NIT Kurukshetra", "BITS Pilani",
+            "Delhi Technological University", "VIT Vellore", "IIIT Hyderabad", "IIIT Bangalore",
+            "Manipal Institute of Technology", "NSUT Delhi"
         ])
         github_url = f"https://github.com/{first_name}{i}"
         linkedin_url = f"https://linkedin.com/in/{first_name}-{last_name}-{i}"
@@ -121,6 +124,7 @@ def generate_students(n=200):
             weights=[0.60, 0.10, 0.30]
         )[0]
         
+        phone = f"+91 {random.randint(60000, 99999)} {random.randint(10000, 99999)}"
         # Pack all this data into a dictionary and drop it in the students bucket
         students.append({
             "name": name,
@@ -143,7 +147,8 @@ def generate_students(n=200):
             "linkedin_url": linkedin_url,
             "project_interests": project_interests,
             "preferred_role": preferred_role,
-            "availability": availability
+            "availability": availability,
+            "phone": phone
         })
         
     return students # Spit out the full bucket of 60 people
@@ -222,6 +227,7 @@ def seed_database():
     # Wipe the slate clean of mock data, but preserve actual registered users.
     cursor.execute("DELETE FROM students WHERE password_hash IS NULL OR password_hash = ''")
     cursor.execute("DELETE FROM teams")
+    cursor.execute("DELETE FROM hackathons")
     
     try:
         cursor.execute("ALTER SEQUENCE teams_team_id_seq RESTART WITH 1")
@@ -247,19 +253,80 @@ def seed_database():
             availability_hours, skills, communication, cluster_id,
             university, github_url, linkedin_url, project_interests,
             past_hackathon_name, past_hackathon_project, past_hackathon_desc,
-            preferred_role, availability
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            preferred_role, availability, phone
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             s['name'], s['email'], s['password_hash'], s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
             s['experience_level'], s['projects_count'], s['hackathons_count'],
             s['availability_hours'], s['skills'], s['communication'], s['cluster_id'],
             s['university'], s['github_url'], s['linkedin_url'], s['project_interests'],
             '', '', '',
-            s['preferred_role'], s['availability']
+            s['preferred_role'], s['availability'], s['phone']
         ))
     conn.commit()
     conn.close()
     print("Successfully seeded 200 developer profiles in PostgreSQL database!")
+    
+    # Open connection to seed hackathons
+    print("Seeding hackathons table...")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    upcoming_events = [
+        {
+            "id": "ethindia",
+            "name": "EthIndia 2026",
+            "organizer": "Devfolio",
+            "date": "Dec 4 - 6, 2026",
+            "location": "Bengaluru, India",
+            "prize": "$50,000+ USD",
+            "description": "Asia's biggest Ethereum hackathon. Build the decentralized future alongside thousands of Web3 developers, designers, and creators.",
+            "tags": "Web3, Blockchain, Solidity, Security",
+            "interest_filter": "Web3"
+        },
+        {
+            "id": "hackmit",
+            "name": "HackMIT 2026",
+            "organizer": "MIT",
+            "date": "Sep 19 - 20, 2026",
+            "location": "MIT (Boston, USA)",
+            "prize": "$20,000+ USD",
+            "description": "MIT's premier undergraduate hackathon. Gathering 1,000 of the world's brightest minds to hack, learn, and showcase innovative tech products.",
+            "tags": "AI, SaaS, Hardware, FinTech",
+            "interest_filter": "AI"
+        },
+        {
+            "id": "sih",
+            "name": "Smart India Hackathon 2026",
+            "organizer": "Ministry of Education, India",
+            "date": "Aug 12 - 15, 2026",
+            "location": "Delhi, India (Nodal Centers)",
+            "prize": "₹1,00,000 per problem statement",
+            "description": "A nationwide initiative to provide students with a platform to solve some of the pressing problems we face in our daily lives.",
+            "tags": "HealthTech, EdTech, IoT, SaaS",
+            "interest_filter": "HealthTech"
+        },
+        {
+            "id": "google-solution",
+            "name": "Google Solution Challenge 2026",
+            "organizer": "Google Developer Student Clubs",
+            "date": "May 15 - June 30, 2026",
+            "location": "Global (Online)",
+            "prize": "$3,000 - $12,000 USD",
+            "description": "Solve one or more of the United Nations 17 Sustainable Development Goals using Google technologies and APIs.",
+            "tags": "AI, Google Cloud, Flutter, SaaS",
+            "interest_filter": "AI"
+        }
+    ]
+    
+    for h in upcoming_events:
+        cursor.execute("""
+        INSERT INTO hackathons (id, name, organizer, date, location, prize, description, tags, interest_filter)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (h["id"], h["name"], h["organizer"], h["date"], h["location"], h["prize"], h["description"], h["tags"], h["interest_filter"]))
+        
+    conn.commit()
+    conn.close()
+    print("Successfully seeded upcoming hackathons in PostgreSQL database!")
     
     print("Generating historical team match trials...")
     historical_df = generate_historical_teams(students, 500) # Generate the 500 test scenarios

@@ -21,6 +21,7 @@ const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Platform</h4>
             <ul className="space-y-2">
               <li><button onClick={() => setActiveTab?.("find-teammates")} className="text-gray-500 hover:text-indigo-600 text-sm transition-colors text-left">Find Teammates</button></li>
+              <li><button onClick={() => setActiveTab?.("hackathons")} className="text-gray-500 hover:text-indigo-600 text-sm transition-colors text-left">Upcoming Hackathons</button></li>
             </ul>
           </div>
 

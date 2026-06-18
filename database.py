@@ -64,10 +64,17 @@ def init_db():
         past_hackathon_project VARCHAR(255) DEFAULT '',
         past_hackathon_desc TEXT DEFAULT '',
         preferred_role VARCHAR(100) DEFAULT 'Frontend Developer',
-        availability VARCHAR(100) DEFAULT 'Looking for team'
+        availability VARCHAR(100) DEFAULT 'Looking for team',
+        phone VARCHAR(50) DEFAULT ''
     )
     """)
     
+    # Add phone column if table already exists
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT ''")
+    except Exception:
+        pass
+        
     # Create messages table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS messages (
@@ -76,6 +83,21 @@ def init_db():
         receiver_id INTEGER NOT NULL,
         message_text TEXT NOT NULL,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+        
+    # Create hackathons table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS hackathons (
+        id VARCHAR(100) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        organizer VARCHAR(255),
+        date VARCHAR(100),
+        location VARCHAR(255),
+        prize VARCHAR(100),
+        description TEXT,
+        tags VARCHAR(255),
+        interest_filter VARCHAR(100)
     )
     """)
         
@@ -121,8 +143,8 @@ def add_student(s):
         availability_hours, skills, communication, cluster_id,
         university, github_url, linkedin_url, project_interests,
         past_hackathon_name, past_hackathon_project, past_hackathon_desc,
-        preferred_role, availability
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        preferred_role, availability, phone
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     params = (
         s['name'], s.get('email'), s.get('password_hash'), s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
@@ -130,7 +152,7 @@ def add_student(s):
         s.get('availability_hours', 15), s.get('skills', 'Generalist'), s['communication'], s.get('cluster_id', -1),
         s.get('university', ''), s.get('github_url', ''), s.get('linkedin_url', ''), s.get('project_interests', ''),
         s.get('past_hackathon_name', ''), s.get('past_hackathon_project', ''), s.get('past_hackathon_desc', ''),
-        s.get('preferred_role', 'Frontend Developer'), s.get('availability', 'Looking for team')
+        s.get('preferred_role', 'Frontend Developer'), s.get('availability', 'Looking for team'), s.get('phone', '')
     )
     execute_query(query, params, commit=True)
 
@@ -143,7 +165,7 @@ def update_student(student_id, s):
         availability_hours = ?, skills = ?, communication = ?,
         university = ?, github_url = ?, linkedin_url = ?, project_interests = ?,
         past_hackathon_name = ?, past_hackathon_project = ?, past_hackathon_desc = ?,
-        preferred_role = ?, availability = ?
+        preferred_role = ?, availability = ?, phone = ?
     WHERE student_id = ?
     """
     params = (
@@ -152,7 +174,7 @@ def update_student(student_id, s):
         s['availability_hours'], s['skills'], s['communication'],
         s.get('university', ''), s.get('github_url', ''), s.get('linkedin_url', ''), s.get('project_interests', ''),
         s.get('past_hackathon_name', ''), s.get('past_hackathon_project', ''), s.get('past_hackathon_desc', ''),
-        s.get('preferred_role', 'Frontend Developer'), s.get('availability', 'Looking for team'),
+        s.get('preferred_role', 'Frontend Developer'), s.get('availability', 'Looking for team'), s.get('phone', ''),
         student_id
     )
     execute_query(query, params, commit=True)
@@ -212,3 +234,20 @@ def get_messages(user1_id, user2_id):
     ORDER BY timestamp ASC
     """
     return execute_query(query, (user1_id, user2_id, user2_id, user1_id), fetch_all=True)
+
+def get_all_hackathons():
+    """Fetches all upcoming hackathons."""
+    return execute_query("SELECT * FROM hackathons", fetch_all=True)
+
+def add_hackathon(h):
+    """Inserts a new hackathon event into the database."""
+    query = """
+    INSERT INTO hackathons (id, name, organizer, date, location, prize, description, tags, interest_filter)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+    params = (
+        h['id'], h['name'], h.get('organizer', ''), h.get('date', ''),
+        h.get('location', ''), h.get('prize', ''), h.get('description', ''),
+        h.get('tags', ''), h.get('interest_filter', '')
+    )
+    execute_query(query, params, commit=True)

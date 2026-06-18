@@ -102,7 +102,11 @@ const Home: React.FC<HomeProps> = ({ setActiveTab }) => {
               <Zap size={14} className="fill-yellow-400 text-yellow-400" /> AI-Powered Matching Ready
             </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
-              Welcome back, {profile?.full_name?.split(" ")[0] || "Hacker"} 👋
+              {loading ? (
+                <span className="opacity-75">Welcome back 👋</span>
+              ) : (
+                `Welcome back, ${profile?.full_name?.split(" ")[0] || "Hacker"} 👋`
+              )}
             </h1>
             <p className="text-blue-100 text-lg mb-8 leading-relaxed">
               Your next winning hackathon team is one search away.

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
-import { Save, User, School, Code, Heart, Briefcase, Star, Github, Linkedin, Mail, Plus, X, Clock, ChevronRight, Lightbulb } from "lucide-react";
+import { Save, User, School, Code, Heart, Briefcase, Star, Github, Linkedin, Mail, Plus, X, Clock, ChevronRight, Lightbulb, Phone } from "lucide-react";
 
 // ─── Skill Taxonomy ──────────────────────────────────────────────────────────
 
@@ -176,7 +176,7 @@ interface ProfileFormProps {
 const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
   const { token } = useAuth();
   const [profile, setProfile] = useState({
-    full_name: "", college: "", contact_email: "",
+    full_name: "", college: "", contact_email: "", phone: "",
     github_link: "", linkedin_link: "",
     skills: [] as string[], interests: [] as string[],
     experience_level: "Beginner", preferred_role: "Frontend Developer",
@@ -197,6 +197,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
             full_name: data.full_name || "",
             college: data.college || "",
             contact_email: data.contact_email || "",
+            phone: data.phone || "",
             github_link: data.github_link || "",
             linkedin_link: data.linkedin_link || "",
             skills: Array.isArray(data.skills) ? data.skills : (data.skills || "").split(",").map((s: string) => s.trim()).filter(Boolean),
@@ -281,6 +282,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
             {field("Full Name", <User size={15} />, "full_name", "text", "Alex Johnson")}
             {field("University / College", <School size={15} />, "college", "text", "Stanford University")}
             {field("Contact Email", <Mail size={15} />, "contact_email", "email", "you@example.com")}
+            {field("Phone Number", <Phone size={15} />, "phone", "tel", "+91 98765 43210")}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {field("GitHub URL", <Github size={15} />, "github_link", "url", "https://github.com/...")}

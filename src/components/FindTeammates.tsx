@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   User, School, Code, Briefcase, Star, Percent, Filter, X, Heart,
   Search, MessageSquare, Github, Linkedin, Mail, Zap,
-  ChevronDown, ChevronUp, Users, RefreshCw, Clock, CheckCircle
+  ChevronDown, ChevronUp, Users, RefreshCw, Clock, CheckCircle, Phone
 } from "lucide-react";
 
 // ─── Typedefs ────────────────────────────────────────────────────────────────
@@ -16,6 +16,7 @@ interface Teammate {
   full_name: string;
   college: string;
   contact_email?: string;
+  phone?: string;
   github_link?: string;
   linkedin_link?: string;
   skills: string[] | string;
@@ -232,20 +233,30 @@ const TeammateCard: React.FC<{
             </button>
           )}
           <div className="flex gap-2">
-            <button onClick={handleMessage}
-              className="flex-1 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors text-sm flex items-center justify-center gap-1.5">
-              <MessageSquare size={14} /> Message
-            </button>
+            {teammate.linkedin_link ? (
+              <a href={teammate.linkedin_link} target="_blank" rel="noopener noreferrer"
+                className="flex-grow py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors text-xs flex items-center justify-center gap-1">
+                <Linkedin size={13} className="text-blue-600" /> LinkedIn
+              </a>
+            ) : (
+              <span className="flex-grow py-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 cursor-not-allowed">
+                <Linkedin size={13} /> LinkedIn
+              </span>
+            )}
+            {teammate.phone ? (
+              <a href={`tel:${teammate.phone}`}
+                className="flex-grow py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors text-xs flex items-center justify-center gap-1">
+                <Phone size={13} className="text-emerald-500" /> Call / SMS
+              </a>
+            ) : (
+              <span className="flex-grow py-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 cursor-not-allowed">
+                <Phone size={13} /> Call / SMS
+              </span>
+            )}
             {teammate.github_link && (
               <a href={teammate.github_link} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-600">
-                <Github size={15} />
-              </a>
-            )}
-            {teammate.linkedin_link && (
-              <a href={teammate.linkedin_link} target="_blank" rel="noopener noreferrer"
-                className="px-3 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-blue-600">
-                <Linkedin size={15} />
+                className="px-2.5 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-600 flex items-center justify-center">
+                <Github size={14} />
               </a>
             )}
           </div>
@@ -282,18 +293,20 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
   const [selectedSkillFilters, setSelectedSkillFilters] = useState<string[]>([]);
   const [searchSkills, setSearchSkills] = useState("");
   const [searchInterests, setSearchInterests] = useState(initialInterests || "");
+  const [searchCollege, setSearchCollege] = useState("");
   const [expFilter, setExpFilter] = useState("Any");
   const [sortBy, setSortBy] = useState<"match" | "experience" | "active">("match");
   const [showWeights, setShowWeights] = useState(false);
   const [weights, setWeights] = useState({ skillWeight: 40, interestWeight: 30, experienceWeight: 20, availabilityWeight: 10 });
 
-  const fetchMatches = async (opts?: { hackathon?: boolean; skills?: string; interests?: string }) => {
+  const fetchMatches = async (opts?: { hackathon?: boolean; skills?: string; interests?: string; college?: string }) => {
     setLoading(true);
     setHasSearched(true);
     try {
       const hackMode = opts?.hackathon ?? hackathonMode;
       const finalSkills = opts?.skills ?? searchSkills;
       const finalInterests = opts?.interests ?? searchInterests;
+      const finalCollege = opts?.college ?? searchCollege;
       const res = await fetch(`${API_BASE}/api/match/${userId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -301,6 +314,7 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
           ...weights,
           searchSkills: finalSkills || undefined,
           searchInterests: finalInterests || undefined,
+          searchCollege: finalCollege || undefined,
           hackathonMode: hackMode,
           limit: 9,
         }),
@@ -420,7 +434,7 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
       {/* ─── Search Panel ────────────────────────────────────────────────────── */}
       {!suggestedOnly && (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Skills Needed</label>
               <input value={searchSkills} onChange={e => setSearchSkills(e.target.value)}
@@ -432,6 +446,12 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
               <input value={searchInterests} onChange={e => setSearchInterests(e.target.value)}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 placeholder="AI, FinTech, HealthTech..." />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">College Name</label>
+              <input value={searchCollege} onChange={e => setSearchCollege(e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                placeholder="IIT, NIT, Stanford..." />
             </div>
           </div>
 
