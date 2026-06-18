@@ -59,8 +59,8 @@ const LandingHero: React.FC<LandingHeroProps> = ({ onGetStarted }) => {
               Powered by React
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 backdrop-blur-sm border border-slate-200 shadow-sm text-sm font-medium text-slate-700">
-              <div className="w-4 h-4 rounded bg-green-500 flex items-center justify-center text-[10px] text-white font-bold">N</div>
-              Node.js Backend
+              <div className="w-4 h-4 rounded bg-emerald-500 flex items-center justify-center text-[10px] text-white font-bold">F</div>
+              FastAPI (Python) Backend
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 backdrop-blur-sm border border-slate-200 shadow-sm text-sm font-medium text-slate-700">
               <BrainCircuit size={16} className="text-purple-500" />
