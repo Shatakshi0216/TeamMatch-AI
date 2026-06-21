@@ -1,39 +1,16 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  User, School, Code, Briefcase, Star, Percent, Filter, X, Heart,
-  Search, MessageSquare, Github, Linkedin, Mail, Zap,
-  ChevronDown, ChevronUp, Users, RefreshCw, Clock, CheckCircle, Phone
+  User, School, Code, Briefcase, Star, Filter, X,
+  Search, Github, Linkedin, Mail, Zap,
+  ChevronDown, ChevronUp, Users, RefreshCw, Phone
 } from "lucide-react";
 
 // ─── Typedefs ────────────────────────────────────────────────────────────────
 
-interface Breakdown { skillScore: number; interestScore: number; expScore: number; availScore: number; }
-interface Teammate {
-  user_id: string;
-  full_name: string;
-  college: string;
-  contact_email?: string;
-  phone?: string;
-  github_link?: string;
-  linkedin_link?: string;
-  skills: string[] | string;
-  interests: string[] | string;
-  experience_level: string;
-  preferred_role: string;
-  availability?: "Available" | "Busy" | "Looking for team";
-  past_hackathon?: string;
-  past_project_name?: string;
-  matchPercentage?: number;
-  breakdown?: Breakdown;
-  commonSkills?: string[];
-  explanation?: string;
-  suggestedFor?: string;
-}
-
-const getSkillsArr = (skills: string[] | string | undefined): string[] => {
+const getSkillsArr = (skills) => {
   if (!skills) return [];
   if (Array.isArray(skills)) return skills;
   return skills.split(",").map(s => s.trim()).filter(Boolean);
@@ -41,8 +18,8 @@ const getSkillsArr = (skills: string[] | string | undefined): string[] => {
 
 // ─── Availability Badge ───────────────────────────────────────────────────────
 
-const AvailBadge: React.FC<{ status?: string }> = ({ status }) => {
-  const map: Record<string, { dot: string; text: string }> = {
+const AvailBadge = ({ status }) => {
+  const map = {
     Available: { dot: "bg-emerald-400", text: "text-emerald-600" },
     Busy: { dot: "bg-red-400", text: "text-red-500" },
     "Looking for team": { dot: "bg-amber-400", text: "text-amber-600" },
@@ -58,7 +35,7 @@ const AvailBadge: React.FC<{ status?: string }> = ({ status }) => {
 
 // ─── Match Breakdown Bar ─────────────────────────────────────────────────────
 
-const BreakdownBar: React.FC<{ label: string; value: number; max: number; color: string }> = ({ label, value, max, color }) => (
+const BreakdownBar = ({ label, value, max, color }) => (
   <div className="space-y-1">
     <div className="flex justify-between text-xs text-slate-500">
       <span>{label}</span>
@@ -77,12 +54,7 @@ const BreakdownBar: React.FC<{ label: string; value: number; max: number; color:
 
 // ─── Teammate Card ───────────────────────────────────────────────────────────
 
-const TeammateCard: React.FC<{
-  teammate: Teammate;
-  currentUserId: string | null;
-  onMessage?: (roomId: string, name: string) => void;
-  isTeamSuggestion?: boolean;
-}> = ({ teammate, currentUserId, onMessage, isTeamSuggestion }) => {
+const TeammateCard = ({ teammate, currentUserId, onMessage, isTeamSuggestion }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const skills = getSkillsArr(teammate.skills);
   const interests = getSkillsArr(teammate.interests);
@@ -148,158 +120,185 @@ const TeammateCard: React.FC<{
             <Briefcase size={11} /> {teammate.preferred_role}
           </span>
           <span className="flex items-center gap-1 text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-            <Star size={11} /> {teammate.experience_level}
+            <AvailBadge status={teammate.availability} />
           </span>
-          <AvailBadge status={teammate.availability} />
         </div>
 
-        {/* AI Explanation */}
-        {teammate.explanation && (
-          <div className="mb-4 px-3 py-2.5 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-700 flex items-start gap-2">
-            <Zap size={12} className="mt-0.5 shrink-0 text-blue-500" />
-            <span>{teammate.explanation}</span>
-          </div>
-        )}
-
-        {/* Common Skills */}
-        {commonSkills.length > 0 && (
-          <div className="mb-3">
-            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1.5">Common Skills</p>
-            <div className="flex flex-wrap gap-1.5">
+        {/* Common Skills Highlight */}
+        {!isTeamSuggestion && commonSkills.length > 0 && (
+          <div className="bg-blue-50/50 border border-blue-100/50 rounded-xl p-3 mb-4">
+            <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <Zap size={11} className="fill-blue-500 text-blue-500" /> Common Skills
+            </p>
+            <div className="flex flex-wrap gap-1">
               {commonSkills.map(s => (
-                <span key={s} className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold flex items-center gap-1">
-                  <CheckCircle size={10} /> {s}
+                <span key={s} className="px-2 py-0.5 bg-blue-100/70 text-blue-700 rounded text-[10px] font-semibold">
+                  {s}
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* All Skills */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {skills.slice(0, 6).map(s => (
-            <span key={s} className={`px-2 py-0.5 rounded-md text-xs font-medium ${commonSkills.includes(s) ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>
-              {s}
-            </span>
-          ))}
-          {skills.length > 6 && (
-            <span className="px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-400">+{skills.length - 6}</span>
+        {/* AI Insight */}
+        {teammate.explanation && (
+          <p className="text-slate-500 text-xs leading-relaxed italic mb-4 border-l-2 border-slate-200 pl-2.5">
+            "{teammate.explanation}"
+          </p>
+        )}
+
+        {/* Skills & Interests Tags */}
+        <div className="space-y-3 mb-6 flex-grow">
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Skills</p>
+            <div className="flex flex-wrap gap-1">
+              {skills.slice(0, 5).map(s => (
+                <span key={s} className="px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg border border-slate-100 text-xs font-semibold">
+                  {s}
+                </span>
+              ))}
+              {skills.length > 5 && (
+                <span className="px-2 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-semibold">
+                  +{skills.length - 5} more
+                </span>
+              )}
+            </div>
+          </div>
+
+          {interests.length > 0 && (
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Project Focus</p>
+              <div className="flex flex-wrap gap-1">
+                {interests.map(i => (
+                  <span key={i} className="px-2.5 py-1 bg-purple-50 text-purple-600 rounded-lg border border-purple-100/70 text-xs font-semibold">
+                    {i}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Interests */}
-        {interests.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {interests.slice(0, 3).map(i => (
-              <span key={i} className="px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-100 font-medium flex items-center gap-1">
-                <Heart size={10} /> {i}
-              </span>
-            ))}
+        {/* Past Project Experience Details */}
+        {teammate.past_hackathon && (
+          <div className="border-t border-slate-50 pt-4 mb-6 text-xs text-slate-500 space-y-1 bg-slate-50/30 p-3 rounded-xl">
+            <p className="font-bold text-slate-700 flex items-center gap-1">
+              <Star size={12} className="text-amber-500 fill-amber-500" /> {teammate.past_hackathon}
+            </p>
+            {teammate.past_project_name && (
+              <p className="text-slate-600 font-semibold">Project: {teammate.past_project_name}</p>
+            )}
           </div>
         )}
 
-        {/* Breakdown */}
+        {/* Interactive Breakdown */}
         {teammate.breakdown && (
-          <div className="mb-4">
-            <button type="button" onClick={() => setShowBreakdown(!showBreakdown)}
-              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors mb-2">
-              {showBreakdown ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              {showBreakdown ? "Hide" : "Show"} score breakdown
+          <div className="border-t border-slate-50 pt-4 mb-4">
+            <button
+              onClick={() => setShowBreakdown(!showBreakdown)}
+              className="w-full flex items-center justify-between text-xs text-slate-500 font-semibold hover:text-slate-700"
+            >
+              <span>Match Diagnostics</span>
+              {showBreakdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
             <AnimatePresence>
               {showBreakdown && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden space-y-2">
-                  <BreakdownBar label="Skill Compatibility" value={teammate.breakdown.skillScore} max={40} color="bg-blue-500" />
-                  <BreakdownBar label="Interest Similarity" value={teammate.breakdown.interestScore} max={30} color="bg-purple-500" />
-                  <BreakdownBar label="Experience Level" value={teammate.breakdown.expScore} max={20} color="bg-amber-500" />
-                  <BreakdownBar label="Availability" value={teammate.breakdown.availScore} max={10} color="bg-emerald-500" />
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="space-y-2 mt-3 overflow-hidden"
+                >
+                  <BreakdownBar label="Skills (40%)" value={teammate.breakdown.skillScore} max={40} color="bg-blue-600" />
+                  <BreakdownBar label="Interests (30%)" value={teammate.breakdown.interestScore} max={30} color="bg-purple-600" />
+                  <BreakdownBar label="Experience (20%)" value={teammate.breakdown.expScore} max={20} color="bg-amber-500" />
+                  <BreakdownBar label="Availability (10%)" value={teammate.breakdown.availScore} max={10} color="bg-emerald-500" />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="mt-auto space-y-2">
+        {/* Contact Links Grid (Replaces Legacy Chat Message Button) */}
+        <div className="grid grid-cols-2 gap-2 mt-auto">
           {teammate.contact_email ? (
-            <a href={`mailto:${teammate.contact_email}?subject=${encodeURIComponent("Team Collaboration Request")}`}
-              className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all text-sm text-center block flex items-center justify-center gap-2 shadow-md shadow-blue-500/20">
-              <Mail size={15} /> Connect via Email
+            <a
+              href={`mailto:${teammate.contact_email}?subject=TeamMatch%20AI%20-%20Let's%20Form%20a%20Hackathon%20Team!`}
+              className="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
+            >
+              <Mail size={13} /> Email
             </a>
           ) : (
-            <button className="w-full py-2.5 bg-blue-50 text-blue-600 rounded-xl font-semibold hover:bg-blue-100 transition-colors text-sm">
-              Connect
+            <button disabled className="py-2 px-3 bg-slate-50 text-slate-300 border border-slate-100 rounded-xl font-bold text-xs cursor-not-allowed flex items-center justify-center gap-1.5">
+              <Mail size={13} /> Email
             </button>
           )}
-          <div className="flex gap-2">
-            {teammate.linkedin_link ? (
-              <a href={teammate.linkedin_link} target="_blank" rel="noopener noreferrer"
-                className="flex-grow py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors text-xs flex items-center justify-center gap-1">
-                <Linkedin size={13} className="text-blue-600" /> LinkedIn
-              </a>
-            ) : (
-              <span className="flex-grow py-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 cursor-not-allowed">
-                <Linkedin size={13} /> LinkedIn
-              </span>
-            )}
-            {teammate.phone ? (
-              <a href={`tel:${teammate.phone}`}
-                className="flex-grow py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors text-xs flex items-center justify-center gap-1">
-                <Phone size={13} className="text-emerald-500" /> Call / SMS
-              </a>
-            ) : (
-              <span className="flex-grow py-2 bg-slate-50 text-slate-400 border border-slate-100 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 cursor-not-allowed">
-                <Phone size={13} /> Call / SMS
-              </span>
-            )}
-            {teammate.github_link && (
-              <a href={teammate.github_link} target="_blank" rel="noopener noreferrer"
-                className="px-2.5 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-600 flex items-center justify-center">
-                <Github size={14} />
-              </a>
-            )}
-          </div>
+
+          {teammate.linkedin_link ? (
+            <a
+              href={teammate.linkedin_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100 rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
+            >
+              <Linkedin size={13} /> LinkedIn
+            </a>
+          ) : (
+            <button disabled className="py-2 px-3 bg-slate-50 text-slate-300 border border-slate-100 rounded-xl font-bold text-xs cursor-not-allowed flex items-center justify-center gap-1.5">
+              <Linkedin size={13} /> LinkedIn
+            </button>
+          )}
+
+          {teammate.phone ? (
+            <a
+              href={`tel:${teammate.phone.replace(/\s+/g, "")}`}
+              className="col-span-2 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all text-xs flex items-center justify-center gap-1.5"
+            >
+              <Phone size={13} /> Call / SMS ({teammate.phone})
+            </a>
+          ) : (
+            <button disabled className="col-span-2 py-2 px-3 bg-slate-50 text-slate-300 border border-slate-100 rounded-xl font-bold text-xs cursor-not-allowed flex items-center justify-center gap-1.5">
+              <Phone size={13} /> Call / SMS (Not Provided)
+            </button>
+          )}
         </div>
       </div>
     </motion.div>
   );
 };
 
-// ─── SKILL OPTIONS ────────────────────────────────────────────────────────────
-const SKILL_OPTIONS = [
-  "React", "Next.js", "Vue", "TypeScript", "Python", "Node.js",
-  "Django", "Flutter", "MongoDB", "PostgreSQL", "TensorFlow", "Docker",
-];
+// ─── Global State Taxonomy ───────────────────────────────────────────────────
+
+const SKILL_OPTIONS = ["React", "Python", "Node.js", "FastAPI", "TensorFlow", "Figma", "Docker", "Solidity"];
 const INTEREST_OPTIONS = ["AI", "Web3", "HealthTech", "FinTech", "EdTech", "IoT", "SaaS", "Security"];
 
-interface FindTeammatesProps {
-  suggestedOnly?: boolean;
-  onMessage?: (roomId: string, name: string) => void;
-  initialInterests?: string;
-}
+// ─── Main Finder View ────────────────────────────────────────────────────────
 
-const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, onMessage, initialInterests }) => {
+const FindTeammates = ({ suggestedOnly, onMessage, initialInterests }) => {
   const { token, userId } = useAuth();
-
-  const [teammates, setTeammates] = useState<Teammate[]>([]);
-  const [teamSuggestion, setTeamSuggestion] = useState<Teammate[]>([]);
+  const [teammates, setTeammates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [teamLoading, setTeamLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [teamSuggestion, setTeamSuggestion] = useState([]);
   const [showTeam, setShowTeam] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Search filter options
+  const [searchSkills, setSearchSkills] = useState("");
+  const [searchInterests, setSearchInterests] = useState("");
+  const [searchCollege, setSearchCollege] = useState("");
   const [hackathonMode, setHackathonMode] = useState(false);
 
-  const [selectedSkillFilters, setSelectedSkillFilters] = useState<string[]>([]);
-  const [searchSkills, setSearchSkills] = useState("");
-  const [searchInterests, setSearchInterests] = useState(initialInterests || "");
-  const [searchCollege, setSearchCollege] = useState("");
+  // Results sidebar filters
+  const [selectedSkillFilters, setSelectedSkillFilters] = useState([]);
   const [expFilter, setExpFilter] = useState("Any");
-  const [sortBy, setSortBy] = useState<"match" | "experience" | "active">("match");
+  const [sortBy, setSortBy] = useState("match");
+
+  // Dynamic ML matching weights state
   const [showWeights, setShowWeights] = useState(false);
   const [weights, setWeights] = useState({ skillWeight: 40, interestWeight: 30, experienceWeight: 20, availabilityWeight: 10 });
 
-  const fetchMatches = async (opts?: { hackathon?: boolean; skills?: string; interests?: string; college?: string }) => {
+  const fetchMatches = async (opts) => {
     setLoading(true);
     setHasSearched(true);
     try {
@@ -358,7 +357,7 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
     return result.sort((a, b) => {
       if (sortBy === "match") return (b.matchPercentage || 0) - (a.matchPercentage || 0);
       if (sortBy === "experience") {
-        const m: any = { Advanced: 3, Intermediate: 2, Beginner: 1 };
+        const m = { Advanced: 3, Intermediate: 2, Beginner: 1 };
         return (m[b.experience_level] || 0) - (m[a.experience_level] || 0);
       }
       return 0;
@@ -507,9 +506,9 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
                   <div key={key} className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="font-medium text-slate-700">{label}</span>
-                      <span className="font-bold text-slate-900">{(weights as any)[key]}%</span>
+                      <span className="font-bold text-slate-900">{weights[key]}%</span>
                     </div>
-                    <input type="range" min="0" max="100" value={(weights as any)[key]}
+                    <input type="range" min="0" max="100" value={weights[key]}
                       onChange={e => setWeights({ ...weights, [key]: parseInt(e.target.value) })}
                       className={`w-full h-2 bg-slate-100 rounded-full appearance-none cursor-pointer ${color}`} />
                   </div>
@@ -544,7 +543,7 @@ const FindTeammates: React.FC<FindTeammatesProps> = ({ suggestedOnly = false, on
             <option>Intermediate</option>
             <option>Advanced</option>
           </select>
-          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)}
             className="text-xs font-medium border border-slate-200 rounded-lg px-3 py-1.5 bg-white text-slate-600 outline-none ml-auto">
             <option value="match">Best Match</option>
             <option value="experience">Experience</option>

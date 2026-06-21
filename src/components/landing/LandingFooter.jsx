@@ -1,7 +1,7 @@
 import React from "react";
 import { Users, Twitter, Linkedin, Github, Mail } from "lucide-react";
 
-const LandingFooter: React.FC = () => {
+const LandingFooter = () => {
   return (
     <footer className="bg-[#1E3A8A] text-white pt-16 pb-8 text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

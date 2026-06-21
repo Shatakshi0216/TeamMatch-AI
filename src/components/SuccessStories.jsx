@@ -1,18 +1,7 @@
 import React from "react";
 import { Star, Quote, Award, Sparkles } from "lucide-react";
 
-interface Story {
-  id: string;
-  teamName: string;
-  hackathon: string;
-  prize: string;
-  matchScore: number;
-  members: { name: string; role: string }[];
-  quote: string;
-  project: string;
-}
-
-const STORIES: Story[] = [
+const STORIES = [
   {
     id: "story-1",
     teamName: "Team FinFlux",
@@ -43,7 +32,7 @@ const STORIES: Story[] = [
   }
 ];
 
-const SuccessStories: React.FC = () => {
+const SuccessStories = () => {
   return (
     <div className="space-y-6">
       <div>

@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
 import { Mail, Lock, UserPlus, LogIn } from "lucide-react";
 
-const AuthForm: React.FC = () => {
+const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,7 +12,7 @@ const AuthForm: React.FC = () => {
   const [error, setError] = useState("");
   const { login } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     const endpoint = isLogin ? `${API_BASE}/api/login` : `${API_BASE}/api/register`;

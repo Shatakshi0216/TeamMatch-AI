@@ -5,12 +5,7 @@ import LandingHowItWorks from "./LandingHowItWorks";
 import LandingFeatures from "./LandingFeatures";
 import LandingFooter from "./LandingFooter";
 
-interface LandingPageProps {
-  onSignIn: () => void;
-  onSignUp: () => void;
-}
-
-export default function LandingPage({ onSignIn, onSignUp }: LandingPageProps) {
+export default function LandingPage({ onSignIn, onSignUp }) {
   return (
     <div className="min-h-screen font-sans bg-gradient-to-br from-[#E3F2FD] to-[#BBDEFB]">
       <LandingHeader onSignIn={onSignIn} onSignUp={onSignUp} />

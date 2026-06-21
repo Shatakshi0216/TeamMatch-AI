@@ -3,35 +3,12 @@ import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 import { Send, User, MessageSquare, ArrowLeft, Check, Loader2, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Message {
-  _id?: string;
-  room_id: string;
-  sender_id: string;
-  sender_name: string;
-  text: string;
-  timestamp: string;
-}
-
-interface Conversation {
-  room_id: string;
-  other_user_name: string;
-  other_user_id: string;
-  last_message: string;
-  last_timestamp: string;
-}
-
-interface ChatProps {
-  initialRoomId?: string;
-  initialRecipientName?: string;
-}
 
 const PAGE_SIZE = 20;
 
 // ─── Message Bubble (memoized to avoid re-renders) ────────────────────────────
 
-const MessageBubble = memo(({ msg, isMe }: { msg: Message; isMe: boolean }) => (
+const MessageBubble = memo(({ msg, isMe }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.95, y: 8 }}
     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -57,13 +34,13 @@ MessageBubble.displayName = "MessageBubble";
 
 // ─── Main Chat Component ──────────────────────────────────────────────────────
 
-const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
+const Chat = ({ initialRoomId, initialRecipientName }) => {
   const { token, userId } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [inputText, setInputText] = useState("");
-  const [activeRoom, setActiveRoom] = useState<string | null>(initialRoomId || null);
-  const [recipientName, setRecipientName] = useState<string | null>(initialRecipientName || null);
+  const [activeRoom, setActiveRoom] = useState(initialRoomId || null);
+  const [recipientName, setRecipientName] = useState(initialRecipientName || null);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
@@ -71,8 +48,8 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const activeRoomRef = useRef<string | null>(null);
+  const scrollRef = useRef(null);
+  const activeRoomRef = useRef(null);
 
   // ── Fetch conversations ─────────────────────────────────────────────────────
   const fetchConversations = useCallback(async (silent = false) => {
@@ -87,7 +64,7 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
   }, [token]);
 
   // ── Load messages (paginated) ───────────────────────────────────────────────
-  const fetchMessages = useCallback(async (roomId: string, pageNum: number, prepend = false, silent = false) => {
+  const fetchMessages = useCallback(async (roomId, pageNum, prepend = false, silent = false) => {
     if (!token) return;
     if (!silent) {
       prepend ? setLoadingMore(true) : setLoadingMessages(true);
@@ -96,7 +73,7 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
       const res = await fetch(`${API_BASE}/api/messages/${roomId}?page=${pageNum}&limit=${PAGE_SIZE}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data: Message[] = await res.json();
+      const data = await res.json();
       setHasMore(data.length === PAGE_SIZE);
       if (prepend) {
         setMessages(prev => [...data, ...prev]);
@@ -129,7 +106,7 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
   }, [activeRoom, loadingMore, hasMore, page, fetchMessages]);
 
   // ── Send message ────────────────────────────────────────────────────────────
-  const sendMessage = useCallback(async (e: React.FormEvent) => {
+  const sendMessage = useCallback(async (e) => {
     e.preventDefault();
     if (!inputText.trim() || !activeRoom) return;
     setSending(true);
@@ -160,14 +137,14 @@ const Chat: React.FC<ChatProps> = ({ initialRoomId, initialRecipientName }) => {
     }
   }, [inputText, activeRoom, token, userId, fetchMessages, fetchConversations]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(e as any);
+      sendMessage(e);
     }
   }, [sendMessage]);
 
-  const openRoom = useCallback((roomId: string, name: string) => {
+  const openRoom = useCallback((roomId, name) => {
     setActiveRoom(roomId);
     setRecipientName(name);
   }, []);

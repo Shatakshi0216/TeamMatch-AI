@@ -1,7 +1,7 @@
 import React from "react";
-import { Shield, Eye, Lock } from "lucide-react";
+import { Shield } from "lucide-react";
 
-const PrivacyPolicy: React.FC = () => {
+const PrivacyPolicy = () => {
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] overflow-hidden">
       <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">

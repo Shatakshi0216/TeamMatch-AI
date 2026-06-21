@@ -1,7 +1,7 @@
 import React from "react";
-import { FileText, ShieldAlert, CheckCircle } from "lucide-react";
+import { FileText, ShieldAlert } from "lucide-react";
 
-const TermsOfService: React.FC = () => {
+const TermsOfService = () => {
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.02)] overflow-hidden">
       <div className="p-6 md:p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">

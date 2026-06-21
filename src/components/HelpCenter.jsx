@@ -1,8 +1,8 @@
 import React from "react";
-import { Mail, MessageCircle, FileText, ExternalLink, HelpCircle } from "lucide-react";
+import { Mail, ExternalLink, HelpCircle } from "lucide-react";
 import { motion } from "motion/react";
 
-const HelpCenter: React.FC = () => {
+const HelpCenter = () => {
   const faqs = [
     {
       question: "How does the AI matching work?",

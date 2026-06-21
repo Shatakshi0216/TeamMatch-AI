@@ -3,28 +3,9 @@ import { Calendar, MapPin, Award, Users, ArrowRight, Loader2 } from "lucide-reac
 import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
 
-interface Hackathon {
-  id: string;
-  name: string;
-  organizer: string;
-  date: string;
-  location: string;
-  prize: string;
-  description: string;
-  tags: string[];
-  interestFilter: string;
-}
-
-// Fetched dynamically from database API
-
-interface UpcomingHackathonsProps {
-  setActiveTab: (tab: string) => void;
-  setSearchInterests: (interests: string) => void;
-}
-
-const UpcomingHackathons: React.FC<UpcomingHackathonsProps> = ({ setActiveTab, setSearchInterests }) => {
+const UpcomingHackathons = ({ setActiveTab, setSearchInterests }) => {
   const { token } = useAuth();
-  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
+  const [hackathons, setHackathons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -73,7 +54,7 @@ const UpcomingHackathons: React.FC<UpcomingHackathonsProps> = ({ setActiveTab, s
     checkAdminStatus();
   }, [token]);
 
-  const handleAddHackathon = async (e: React.FormEvent) => {
+  const handleAddHackathon = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) return;
     setSubmitting(true);
@@ -115,7 +96,7 @@ const UpcomingHackathons: React.FC<UpcomingHackathonsProps> = ({ setActiveTab, s
     }
   };
 
-  const handleFindTeammates = (interest: string) => {
+  const handleFindTeammates = (interest) => {
     setSearchInterests(interest);
     setActiveTab("find-teammates");
   };

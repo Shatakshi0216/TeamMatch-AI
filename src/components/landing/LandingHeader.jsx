@@ -1,12 +1,7 @@
 import React from "react";
 import { Users } from "lucide-react";
 
-interface LandingHeaderProps {
-  onSignIn: () => void;
-  onSignUp: () => void;
-}
-
-const LandingHeader: React.FC<LandingHeaderProps> = ({ onSignIn, onSignUp }) => {
+const LandingHeader = ({ onSignIn, onSignUp }) => {
   return (
     <header className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b text-gray-900 border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.05)] transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

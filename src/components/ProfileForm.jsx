@@ -6,7 +6,7 @@ import { Save, User, School, Code, Heart, Briefcase, Star, Github, Linkedin, Mai
 
 // ─── Skill Taxonomy ──────────────────────────────────────────────────────────
 
-const SKILL_SUGGESTIONS: Record<string, string[]> = {
+const SKILL_SUGGESTIONS = {
   React: ["Next.js", "TypeScript", "Tailwind", "Redux", "Node.js"],
   "Next.js": ["React", "TypeScript", "Tailwind", "Vercel"],
   Python: ["TensorFlow", "Django", "Flask", "Scikit-learn", "FastAPI"],
@@ -35,8 +35,8 @@ const ROLES = ["Frontend Developer", "Backend Developer", "Full Stack Developer"
 
 // ─── Tag Component ────────────────────────────────────────────────────────────
 
-const Tag: React.FC<{ label: string; color?: string; onRemove?: () => void; onClick?: () => void; selected?: boolean }> = ({ label, color = "blue", onRemove, onClick, selected }) => {
-  const colors: Record<string, string> = {
+const Tag = ({ label, color = "blue", onRemove, onClick, selected }) => {
+  const colors = {
     blue: "bg-blue-50 text-blue-700 border-blue-200",
     green: "bg-emerald-50 text-emerald-700 border-emerald-200",
     purple: "bg-purple-50 text-purple-700 border-purple-200",
@@ -60,11 +60,11 @@ const Tag: React.FC<{ label: string; color?: string; onRemove?: () => void; onCl
 
 // ─── Skill Picker ────────────────────────────────────────────────────────────
 
-const SkillPicker: React.FC<{ selected: string[]; onChange: (skills: string[]) => void }> = ({ selected, onChange }) => {
+const SkillPicker = ({ selected, onChange }) => {
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const toggle = (skill: string) => {
+  const toggle = (skill) => {
     onChange(selected.includes(skill) ? selected.filter(s => s !== skill) : [...selected, skill]);
   };
 
@@ -149,8 +149,8 @@ const SkillPicker: React.FC<{ selected: string[]; onChange: (skills: string[]) =
 
 // ─── Interest Picker ──────────────────────────────────────────────────────────
 
-const InterestPicker: React.FC<{ selected: string[]; onChange: (i: string[]) => void }> = ({ selected, onChange }) => {
-  const toggle = (interest: string) =>
+const InterestPicker = ({ selected, onChange }) => {
+  const toggle = (interest) =>
     onChange(selected.includes(interest) ? selected.filter(i => i !== interest) : [...selected, interest]);
 
   return (
@@ -169,16 +169,12 @@ const InterestPicker: React.FC<{ selected: string[]; onChange: (i: string[]) => 
 
 // ─── Profile Form ─────────────────────────────────────────────────────────────
 
-interface ProfileFormProps {
-  onSaveSuccess?: () => void;
-}
-
-const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
+const ProfileForm = ({ onSaveSuccess }) => {
   const { token } = useAuth();
   const [profile, setProfile] = useState({
     full_name: "", college: "", contact_email: "", phone: "",
     github_link: "", linkedin_link: "",
-    skills: [] as string[], interests: [] as string[],
+    skills: [], interests: [],
     experience_level: "Beginner", preferred_role: "Frontend Developer",
     availability: "Looking for team",
     past_hackathon: "", past_project_name: "", past_project_desc: "",
@@ -200,8 +196,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
             phone: data.phone || "",
             github_link: data.github_link || "",
             linkedin_link: data.linkedin_link || "",
-            skills: Array.isArray(data.skills) ? data.skills : (data.skills || "").split(",").map((s: string) => s.trim()).filter(Boolean),
-            interests: Array.isArray(data.interests) ? data.interests : (data.interests || "").split(",").map((s: string) => s.trim()).filter(Boolean),
+            skills: Array.isArray(data.skills) ? data.skills : (data.skills || "").split(",").map((s) => s.trim()).filter(Boolean),
+            interests: Array.isArray(data.interests) ? data.interests : (data.interests || "").split(",").map((s) => s.trim()).filter(Boolean),
             experience_level: data.experience_level || "Beginner",
             preferred_role: data.preferred_role || "Frontend Developer",
             availability: data.availability || "Looking for team",
@@ -215,12 +211,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
     fetchProfile();
   }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true); setMessage("");
 
     // ─── Validation ────────────────────────────────────────────────────────────
-    const errors: string[] = [];
+    const errors = [];
     if (!profile.full_name.trim()) errors.push("Full Name is required");
     if (profile.skills.length < 3) errors.push("Add at least 3 skills");
     if (!profile.experience_level) errors.push("Experience level is required");
@@ -247,10 +243,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSaveSuccess }) => {
   };
 
 
-  const field = (label: string, icon: React.ReactNode, key: keyof typeof profile, type = "text", placeholder = "") => (
+  const field = (label, icon, key, type = "text", placeholder = "") => (
     <div>
       <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">{icon} {label}</label>
-      <input type={type} value={profile[key] as string} onChange={e => setProfile({ ...profile, [key]: e.target.value })}
+      <input type={type} value={profile[key]} onChange={e => setProfile({ ...profile, [key]: e.target.value })}
         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white"
         placeholder={placeholder} />
     </div>

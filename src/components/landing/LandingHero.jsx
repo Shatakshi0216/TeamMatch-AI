@@ -2,11 +2,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { BrainCircuit, Users, Code, Zap } from "lucide-react";
 
-interface LandingHeroProps {
-  onGetStarted: () => void;
-}
-
-const LandingHero: React.FC<LandingHeroProps> = ({ onGetStarted }) => {
+const LandingHero = ({ onGetStarted }) => {
   return (
     <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
       {/* Background decorations */}
@@ -30,7 +26,7 @@ const LandingHero: React.FC<LandingHeroProps> = ({ onGetStarted }) => {
             <Zap size={16} className="text-yellow-500 fill-yellow-500" />
             <span>The #1 Hackathon Matching Platform</span>
           </div>
-
+ 
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 tracking-tight mb-6 leading-tight">
             Find Your Perfect Hackathon Team in <span className="text-blue-600 bg-clip-text">Seconds with AI</span>
           </h1>

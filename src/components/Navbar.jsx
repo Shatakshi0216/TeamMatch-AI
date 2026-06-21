@@ -1,13 +1,8 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-import { LogOut, User, Search, PlusCircle, LayoutDashboard, MessageSquare, HelpCircle, Calendar } from "lucide-react";
+import { LogOut, User, Search, LayoutDashboard, HelpCircle, Calendar } from "lucide-react";
 
-interface NavbarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
+const Navbar = ({ activeTab, setActiveTab }) => {
   const logout = useAuth().logout;
 
   const navItems = [

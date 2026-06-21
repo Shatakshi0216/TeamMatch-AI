@@ -9,20 +9,20 @@ import HelpCenter from "./HelpCenter";
 import UpcomingHackathons from "./UpcomingHackathons";
 import SuccessStories from "./SuccessStories";
 import TermsOfService from "./TermsOfService";
-import PrivacyPolicy from "./PrivacyPolicy";
+import PrivacyPolicy from "./PlatformPolicy";
 import { motion, AnimatePresence } from "motion/react";
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-  const [recipientName, setRecipientName] = useState<string | null>(null);
-  const [searchInterests, setSearchInterests] = useState<string>("");
+  const [activeRoomId, setActiveRoomId] = useState(null);
+  const [recipientName, setRecipientName] = useState(null);
+  const [searchInterests, setSearchInterests] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab]);
 
-  const startChat = (roomId: string, name: string) => {
+  const startChat = (roomId, name) => {
     setActiveRoomId(roomId);
     setRecipientName(name);
     setActiveTab("chat");

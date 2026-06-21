@@ -4,7 +4,7 @@ import AuthForm from "./components/AuthForm";
 import Dashboard from "./components/Dashboard";
 import LandingPage from "./components/landing/LandingPage";
 
-const AppContent: React.FC = () => {
+const AppContent = () => {
   const { isAuthenticated } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
 

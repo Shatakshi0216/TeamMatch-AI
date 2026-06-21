@@ -1,11 +1,7 @@
 import React from "react";
 import { Github, Twitter, Linkedin, Mail, Heart } from "lucide-react";
 
-interface FooterProps {
-  setActiveTab?: (tab: string) => void;
-}
-
-const Footer: React.FC<FooterProps> = ({ setActiveTab }) => {
+const Footer = ({ setActiveTab }) => {
   return (
     <footer className="bg-white border-t border-gray-200 pt-12 pb-8 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

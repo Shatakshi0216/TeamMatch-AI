@@ -7,13 +7,9 @@ import {
   AlertCircle, Github, Linkedin, Code, Heart, Briefcase, Trophy
 } from "lucide-react";
 
-interface HomeProps {
-  setActiveTab: (tab: string) => void;
-}
-
 // ─── Weighted Profile Strength ────────────────────────────────────────────────
 // Only count fields the user explicitly fills in (not defaults)
-const PROFILE_WEIGHTS: { key: string; label: string; weight: number }[] = [
+const PROFILE_WEIGHTS = [
   { key: "full_name",         label: "Name",                weight: 10 },
   { key: "college",           label: "University",          weight: 10 },
   { key: "skills",            label: "Skills (3+)",         weight: 30 },
@@ -24,7 +20,7 @@ const PROFILE_WEIGHTS: { key: string; label: string; weight: number }[] = [
   { key: "past_project_desc", label: "Past Project",        weight:  5 },
 ];
 
-function calculateProfileStrength(profile: any): number {
+function calculateProfileStrength(profile) {
   if (!profile) return 0;
   let score = 0;
   for (const { key, weight } of PROFILE_WEIGHTS) {
@@ -32,7 +28,7 @@ function calculateProfileStrength(profile: any): number {
     if (!val) continue;
     if (key === "skills") {
       // Only count if at least 3 skills
-      const arr = Array.isArray(val) ? val : String(val).split(",").map((s: string) => s.trim()).filter(Boolean);
+      const arr = Array.isArray(val) ? val : String(val).split(",").map((s) => s.trim()).filter(Boolean);
       if (arr.length >= 3) score += weight;
       else if (arr.length >= 1) score += Math.round(weight * 0.5); // partial credit
     } else if (key === "experience_level") {
@@ -49,8 +45,8 @@ function calculateProfileStrength(profile: any): number {
   return Math.min(100, score);
 }
 
-function getMissingFields(profile: any): string[] {
-  const missing: string[] = [];
+function getMissingFields(profile) {
+  const missing = [];
   for (const { key, label } of PROFILE_WEIGHTS) {
     const val = profile?.[key];
     if (!val || (key === "skills" && (Array.isArray(val) ? val : String(val).split(",").filter(Boolean)).length < 3)) {
@@ -60,9 +56,9 @@ function getMissingFields(profile: any): string[] {
   return missing;
 }
 
-const Home: React.FC<HomeProps> = ({ setActiveTab }) => {
+const Home = ({ setActiveTab }) => {
   const { token } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
