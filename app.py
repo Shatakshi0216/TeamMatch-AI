@@ -1,8 +1,12 @@
 import os
 import hashlib
+import jwt
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+
+JWT_SECRET = os.environ.get("JWT_SECRET", "teammatch_ai_secure_token_key_2026")
+JWT_ALGORITHM = "HS256"
 
 from database import (
     init_db, get_all_students, add_student, get_all_teams, 
@@ -89,14 +93,17 @@ def get_student_by_id(student_id: int):
     return execute_query("SELECT * FROM students WHERE student_id = %s", (student_id,), fetch_one=True)
 
 def get_user_id_from_header(request: Request) -> int:
-    """Extracts mock user ID (student_id) from Authorization Bearer header."""
+    """Extracts and decodes user ID (student_id) from Authorization Bearer JWT token."""
     auth = request.headers.get("Authorization")
     if not auth or not auth.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
     token = auth.split(" ")[1]
     try:
-        return int(token)
-    except ValueError:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return int(payload["user_id"])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 @app.post("/api/register", status_code=status.HTTP_201_CREATED)
@@ -140,10 +147,11 @@ async def api_register(request: Request):
         new_student = get_student_by_email(data['email'])
         student_data = dict(new_student)
         student_data.pop('password_hash', None)
+        token = jwt.encode({"user_id": student_data['student_id']}, JWT_SECRET, algorithm=JWT_ALGORITHM)
         return {
             "message": "Registration successful.",
             "student": student_data,
-            "token": str(student_data['student_id']),
+            "token": token,
             "userId": student_data['student_id']
         }
     except HTTPException as he:
@@ -169,10 +177,11 @@ async def api_login(request: Request):
             
         student_data = dict(student)
         student_data.pop('password_hash', None)
+        token = jwt.encode({"user_id": student_data['student_id']}, JWT_SECRET, algorithm=JWT_ALGORITHM)
         return {
             "message": "Login successful.",
             "student": student_data,
-            "token": str(student_data['student_id']),
+            "token": token,
             "userId": student_data['student_id']
         }
     except HTTPException as he:
