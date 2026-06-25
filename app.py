@@ -86,7 +86,7 @@ def infer_skills_ratings(skills_list):
 
 def get_student_by_id(student_id: int):
     """Retrieves student profile by id."""
-    return execute_query("SELECT * FROM students WHERE student_id = ?", (student_id,), fetch_one=True)
+    return execute_query("SELECT * FROM students WHERE student_id = %s", (student_id,), fetch_one=True)
 
 def get_user_id_from_header(request: Request) -> int:
     """Extracts mock user ID (student_id) from Authorization Bearer header."""

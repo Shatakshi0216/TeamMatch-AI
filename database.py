@@ -17,8 +17,6 @@ def get_db_connection():
 def execute_query(query, params=(), commit=False, fetch_all=False, fetch_one=False):
     """Executes a SQL query on PostgreSQL."""
     conn = get_db_connection()
-    # Translate ? to %s for PostgreSQL in case any endpoints use ?
-    query = query.replace("?", "%s")
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute(query, params)
     if commit:
@@ -121,7 +119,7 @@ def get_all_students():
 
 def get_student_by_email(email):
     """Fetches a student profile by their email address."""
-    return execute_query("SELECT * FROM students WHERE email = ?", (email,), fetch_one=True)
+    return execute_query("SELECT * FROM students WHERE email = %s", (email,), fetch_one=True)
 
 def add_student(s):
     """Registers a new student profile."""
@@ -133,7 +131,7 @@ def add_student(s):
         university, github_url, linkedin_url, project_interests,
         past_hackathon_name, past_hackathon_project, past_hackathon_desc,
         preferred_role, availability, phone
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     params = (
         s['name'], s.get('email'), s.get('password_hash'), s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
@@ -149,13 +147,13 @@ def update_student(student_id, s):
     """Updates an existing student profile."""
     query = """
     UPDATE students SET 
-        name = ?, dsa = ?, backend = ?, frontend = ?, ml = ?, uiux = ?, 
-        experience_level = ?, projects_count = ?, hackathons_count = ?, 
-        availability_hours = ?, skills = ?, communication = ?,
-        university = ?, github_url = ?, linkedin_url = ?, project_interests = ?,
-        past_hackathon_name = ?, past_hackathon_project = ?, past_hackathon_desc = ?,
-        preferred_role = ?, availability = ?, phone = ?
-    WHERE student_id = ?
+        name = %s, dsa = %s, backend = %s, frontend = %s, ml = %s, uiux = %s, 
+        experience_level = %s, projects_count = %s, hackathons_count = %s, 
+        availability_hours = %s, skills = %s, communication = %s,
+        university = %s, github_url = %s, linkedin_url = %s, project_interests = %s,
+        past_hackathon_name = %s, past_hackathon_project = %s, past_hackathon_desc = %s,
+        preferred_role = %s, availability = %s, phone = %s
+    WHERE student_id = %s
     """
     params = (
         s['name'], s['dsa'], s['backend'], s['frontend'], s['ml'], s['uiux'],
@@ -170,7 +168,7 @@ def update_student(student_id, s):
 
 def update_student_cluster(student_id, cluster_id):
     """Updates the K-Means cluster assignment for a student."""
-    execute_query("UPDATE students SET cluster_id = ? WHERE student_id = ?", (cluster_id, student_id), commit=True)
+    execute_query("UPDATE students SET cluster_id = %s WHERE student_id = %s", (cluster_id, student_id), commit=True)
 
 def get_all_teams():
     """Fetches all saved teams."""
@@ -181,7 +179,7 @@ def add_team(t):
     query = """
     INSERT INTO teams (
         team_name, description, health_score, members, predicted_compatibility
-    ) VALUES (?, ?, ?, ?, ?)
+    ) VALUES (%s, %s, %s, %s, %s)
     """
     params = (
         t['team_name'], t.get('description', ''), t.get('health_score', 0.0),
@@ -191,13 +189,13 @@ def add_team(t):
 
 def delete_team(team_id):
     """Deletes a team roster by ID."""
-    execute_query("DELETE FROM teams WHERE team_id = ?", (team_id,), commit=True)
+    execute_query("DELETE FROM teams WHERE team_id = %s", (team_id,), commit=True)
 
 def save_metric(name, value):
     """Saves or updates a model evaluation metric."""
     query = """
     INSERT INTO training_metrics (metric_name, metric_value, updated_at) 
-    VALUES (?, ?, CURRENT_TIMESTAMP)
+    VALUES (%s, %s, CURRENT_TIMESTAMP)
     ON CONFLICT(metric_name) DO UPDATE SET 
         metric_value = EXCLUDED.metric_value, 
         updated_at = CURRENT_TIMESTAMP
@@ -219,7 +217,7 @@ def add_hackathon(h):
     """Inserts a new hackathon event into the database."""
     query = """
     INSERT INTO hackathons (id, name, organizer, date, location, prize, description, tags, interest_filter)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     params = (
         h['id'], h['name'], h.get('organizer', ''), h.get('date', ''),
