@@ -7,7 +7,7 @@ import uvicorn
 from database import (
     init_db, get_all_students, add_student, get_all_teams, 
     add_team, delete_team, get_student_by_email, update_student,
-    add_message, get_messages, get_db_connection, execute_query
+    get_db_connection, execute_query
 )
 from engine.ml_pipeline import (
     get_recommendations, calculate_ml_team_health, get_ml_team_recommendations
@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-init_db()
+init_db() 
 
 def hash_password(password: str) -> str:
     """Hashes the password with SHA-256 for basic security validation."""
@@ -326,26 +326,7 @@ async def api_delete_team(team_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/messages")
-async def api_send_message(request: Request):
-    """Sends a new message between two candidates."""
-    data = await request.json()
-    if not data or 'sender_id' not in data or 'receiver_id' not in data or 'message_text' not in data:
-        raise HTTPException(status_code=400, detail="sender_id, receiver_id, and message_text are required.")
-    try:
-        add_message(int(data['sender_id']), int(data['receiver_id']), data['message_text'].strip())
-        return {"status": "success", "message": "Message sent."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/messages/{user1_id}/{user2_id}")
-async def api_get_messages(user1_id: int, user2_id: int):
-    """Retrieves conversation history between two candidates."""
-    try:
-        msgs = get_messages(user1_id, user2_id)
-        return msgs
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/profile")
 async def api_get_profile(request: Request):
@@ -537,70 +518,7 @@ async def api_build_team(userId: int, request: Request):
         })
     return team
 
-@app.get("/api/conversations")
-async def api_get_conversations(request: Request):
-    """Lists conversations with latest messages for authenticated student."""
-    user_id = get_user_id_from_header(request)
-    
-    rows = execute_query("""
-        WITH last_messages AS (
-            SELECT DISTINCT ON (
-                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END
-            )
-                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as other_id,
-                message_text,
-                timestamp,
-                sender_id
-            FROM messages
-            WHERE sender_id = ? OR receiver_id = ?
-            ORDER BY 
-                CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END,
-                timestamp DESC
-        )
-        SELECT lm.other_id, lm.message_text, lm.timestamp, lm.sender_id, s.name, s.university, s.email
-        FROM last_messages lm
-        JOIN students s ON s.student_id = lm.other_id
-        ORDER BY lm.timestamp DESC
-    """, (user_id, user_id, user_id, user_id, user_id), fetch_all=True)
-    
-    conversations = []
-    if rows:
-        for row in rows:
-            conversations.append({
-                "room_id": f"{min(user_id, row['other_id'])}_{max(user_id, row['other_id'])}",
-                "other_user_name": row['name'],
-                "other_user_id": str(row['other_id']),
-                "last_message": row['message_text'],
-                "last_timestamp": row['timestamp']
-            })
-            
-    return conversations
 
-@app.get("/api/messages/{room_id}")
-async def api_get_room_messages(room_id: str, request: Request):
-    """Retrieves conversation history mapped for TeamMatch AI room ID."""
-    get_user_id_from_header(request)
-    try:
-        u1, u2 = map(int, room_id.split("_"))
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid room_id format")
-        
-    msgs = get_messages(u1, u2)
-    
-    names_rows = execute_query("SELECT student_id, name FROM students WHERE student_id IN (?, ?)", (u1, u2), fetch_all=True)
-    names = {row['student_id']: row['name'] for row in names_rows} if names_rows else {}
-    
-    formatted_msgs = []
-    for m in msgs:
-        formatted_msgs.append({
-            "_id": str(m['message_id']),
-            "room_id": room_id,
-            "sender_id": str(m['sender_id']),
-            "sender_name": names.get(m['sender_id'], "Unknown"),
-            "text": m['message_text'],
-            "timestamp": m['timestamp']
-        })
-    return formatted_msgs
 
 @app.get("/api/hackathons")
 async def api_get_hackathons():

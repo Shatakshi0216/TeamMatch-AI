@@ -75,17 +75,6 @@ def init_db():
     except Exception:
         pass
         
-    # Create messages table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS messages (
-        message_id SERIAL PRIMARY KEY,
-        sender_id INTEGER NOT NULL,
-        receiver_id INTEGER NOT NULL,
-        message_text TEXT NOT NULL,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-        
     # Create hackathons table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS hackathons (
@@ -220,20 +209,7 @@ def get_all_metrics():
     rows = execute_query("SELECT * FROM training_metrics", fetch_all=True)
     return {row['metric_name']: row['metric_value'] for row in rows} if rows else {}
 
-def add_message(sender_id, receiver_id, message_text):
-    """Saves a new chat message to the database."""
-    query = "INSERT INTO messages (sender_id, receiver_id, message_text) VALUES (?, ?, ?)"
-    execute_query(query, (sender_id, receiver_id, message_text), commit=True)
 
-def get_messages(user1_id, user2_id):
-    """Retrieves message history between two candidates."""
-    query = """
-    SELECT * FROM messages 
-    WHERE (sender_id = ? AND receiver_id = ?) 
-       OR (sender_id = ? AND receiver_id = ?)
-    ORDER BY timestamp ASC
-    """
-    return execute_query(query, (user1_id, user2_id, user2_id, user1_id), fetch_all=True)
 
 def get_all_hackathons():
     """Fetches all upcoming hackathons."""

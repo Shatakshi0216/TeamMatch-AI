@@ -4,7 +4,6 @@ import ProfileForm from "./ProfileForm";
 import FindTeammates from "./FindTeammates";
 import Home from "./Home";
 import Footer from "./Footer";
-import Chat from "./Chat";
 import HelpCenter from "./HelpCenter";
 import UpcomingHackathons from "./UpcomingHackathons";
 import SuccessStories from "./SuccessStories";
@@ -14,19 +13,11 @@ import { motion, AnimatePresence } from "motion/react";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [activeRoomId, setActiveRoomId] = useState(null);
-  const [recipientName, setRecipientName] = useState(null);
   const [searchInterests, setSearchInterests] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab]);
-
-  const startChat = (roomId, name) => {
-    setActiveRoomId(roomId);
-    setRecipientName(name);
-    setActiveTab("chat");
-  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -35,9 +26,7 @@ const Dashboard = () => {
       case "profile":
         return <ProfileForm onSaveSuccess={() => setActiveTab("dashboard")} />;
       case "find-teammates":
-        return <FindTeammates suggestedOnly={false} onMessage={startChat} initialInterests={searchInterests} />;
-      case "chat":
-        return <Chat initialRoomId={activeRoomId || undefined} initialRecipientName={recipientName || undefined} />;
+        return <FindTeammates suggestedOnly={false} initialInterests={searchInterests} />;
       case "help":
         return <HelpCenter />;
       case "hackathons":
