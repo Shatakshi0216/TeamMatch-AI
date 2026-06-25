@@ -429,7 +429,7 @@ async def api_match(userId: int, request: Request):
     search_ints = data.get('searchInterests', '')
     search_college = data.get('searchCollege', '')
     
-    recs = get_recommendations(userId, top_n=50, metric='cosine')
+    recs = get_recommendations(userId, top_n=1000, metric='cosine')
     
     my_student = get_student_by_id(userId)
     my_skills = [s.strip().lower() for s in my_student['skills'].split(",") if s.strip()] if my_student and my_student['skills'] else []
