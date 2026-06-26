@@ -569,6 +569,11 @@ async def api_add_hackathon(request: Request):
         if not data or not data.get('name'):
             raise HTTPException(status_code=400, detail="Hackathon Name is required.")
             
+        # Check if hackathon with same name already exists in database
+        existing_hackathon = execute_query("SELECT * FROM hackathons WHERE name = %s", (data['name'],), fetch_one=True)
+        if existing_hackathon:
+            raise HTTPException(status_code=400, detail="A hackathon with this name is already registered.")
+            
         # Generate clean ID/slug
         slug = "".join(c.lower() for c in data['name'] if c.isalnum() or c.isspace()).strip().replace(" ", "-")
         h_id = f"{slug}-{uuid.uuid4().hex[:6]}"
