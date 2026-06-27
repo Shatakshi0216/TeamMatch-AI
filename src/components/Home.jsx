@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
 import {
   User, Search, Zap, CheckCircle2, ArrowRight, Star, Sparkles,
-  AlertCircle, Github, Linkedin, Code, Heart, Briefcase, Trophy, Users
+  AlertCircle, Github, Linkedin, Code, Heart, Briefcase, Trophy, Users, Trash2
 } from "lucide-react";
 
 // ─── Weighted Profile Strength ────────────────────────────────────────────────
