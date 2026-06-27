@@ -83,9 +83,14 @@ const Home = ({ setActiveTab }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      setTeams(data);
+      if (Array.isArray(data)) {
+        setTeams(data);
+      } else {
+        setTeams([]);
+      }
     } catch (e) {
       console.error("Failed to fetch teams", e);
+      setTeams([]);
     } finally {
       setTeamsLoading(false);
     }
@@ -256,13 +261,13 @@ const Home = ({ setActiveTab }) => {
                 </div>
               </div>
               <span className="text-xs bg-indigo-50 text-indigo-600 font-bold px-2.5 py-1 rounded-full border border-indigo-100/30">
-                {teams.length} Roster{teams.length !== 1 ? 's' : ''}
+                {(teams || []).length} Roster{(teams || []).length !== 1 ? 's' : ''}
               </span>
             </div>
             
             {teamsLoading ? (
               <div className="py-8 text-center text-slate-400 text-sm">Loading team rosters...</div>
-            ) : teams.length === 0 ? (
+            ) : !Array.isArray(teams) || teams.length === 0 ? (
               <div className="text-center py-10 border-2 border-dashed border-slate-150 rounded-2xl bg-slate-50/30">
                 <p className="text-slate-400 text-sm">No saved teams yet.</p>
                 <button
@@ -274,46 +279,49 @@ const Home = ({ setActiveTab }) => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {teams.map(t => (
-                  <div key={t.id} className="p-5 bg-gradient-to-br from-slate-50/70 to-white border border-slate-100 rounded-2xl flex flex-col justify-between hover:shadow-lg hover:border-indigo-100 transition-all relative group">
-                    <button
-                      onClick={() => handleDeleteTeam(t.id)}
-                      className="absolute top-4 right-4 p-1.5 bg-white border border-slate-105 text-slate-400 hover:text-red-500 hover:border-red-100 rounded-xl transition-all shadow-sm opacity-0 group-hover:opacity-100"
-                      title="Delete Team"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                    <div className="space-y-1.5">
-                      <h4 className="font-extrabold text-slate-800 pr-8 truncate text-sm tracking-tight">{t.team_name}</h4>
-                      <p className="text-[11px] text-slate-400 italic leading-relaxed pr-8 line-clamp-2">{t.description}</p>
-                    </div>
-                    
-                    <div className="mt-5 flex items-center justify-between border-t border-slate-100/70 pt-3.5">
-                      <div className="flex items-center gap-2">
-                        {/* Overlapping Avatars */}
-                        <div className="flex -space-x-1.5 overflow-hidden">
-                          {t.members.slice(0, 4).map((m, idx) => (
-                            <div key={idx} className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-br from-indigo-500 to-purple-650 text-white font-bold text-[8px] flex items-center justify-center shadow-sm">
-                              {idx === 0 ? "You" : `M${idx}`}
-                            </div>
-                          ))}
-                          {t.members.length > 4 && (
-                            <div className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-slate-200 text-slate-600 font-bold text-[8px] flex items-center justify-center shadow-sm">
-                              +{t.members.length - 4}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                          {t.members.length} member{t.members.length !== 1 ? 's' : ''}
-                        </span>
+                {teams.map(t => {
+                  const mList = t.members || [];
+                  return (
+                    <div key={t.id} className="p-5 bg-gradient-to-br from-slate-50/70 to-white border border-slate-100 rounded-2xl flex flex-col justify-between hover:shadow-lg hover:border-indigo-100 transition-all relative group">
+                      <button
+                        onClick={() => handleDeleteTeam(t.id)}
+                        className="absolute top-4 right-4 p-1.5 bg-white border border-slate-105 text-slate-400 hover:text-red-500 hover:border-red-100 rounded-xl transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                        title="Delete Team"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                      <div className="space-y-1.5">
+                        <h4 className="font-extrabold text-slate-800 pr-8 truncate text-sm tracking-tight">{t.team_name}</h4>
+                        <p className="text-[11px] text-slate-400 italic leading-relaxed pr-8 line-clamp-2">{t.description}</p>
                       </div>
                       
-                      <span className="text-[10px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 px-2.5 py-1 rounded-xl shadow-sm shadow-indigo-500/10 tracking-tight">
-                        {t.health_score}% Health
-                      </span>
+                      <div className="mt-5 flex items-center justify-between border-t border-slate-100/70 pt-3.5">
+                        <div className="flex items-center gap-2">
+                          {/* Overlapping Avatars */}
+                          <div className="flex -space-x-1.5 overflow-hidden">
+                            {mList.slice(0, 4).map((m, idx) => (
+                              <div key={idx} className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-br from-indigo-500 to-purple-650 text-white font-bold text-[8px] flex items-center justify-center shadow-sm">
+                                {idx === 0 ? "You" : `M${idx}`}
+                              </div>
+                            ))}
+                            {mList.length > 4 && (
+                              <div className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-slate-200 text-slate-600 font-bold text-[8px] flex items-center justify-center shadow-sm">
+                                +{mList.length - 4}
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                            {mList.length} member{mList.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        
+                        <span className="text-[10px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 px-2.5 py-1 rounded-xl shadow-sm shadow-indigo-500/10 tracking-tight">
+                          {t.health_score}% Health
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

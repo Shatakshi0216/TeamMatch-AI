@@ -292,7 +292,7 @@ async def api_get_teams(request: Request):
         teams_list = get_all_teams()
         formatted_teams = []
         for t in teams_list:
-            members_str = t.get('members', '')
+            members_str = t.get('members') or ''
             member_ids = [int(mid) for mid in members_str.split(',') if mid]
             
             # Filter: only show the team if the logged-in user is a member of it!
