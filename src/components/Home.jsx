@@ -244,45 +244,71 @@ const Home = ({ setActiveTab }) => {
         <div className="lg:col-span-2 space-y-6">
 
           {/* My Formed Teams Section */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                <Users size={20} />
+          <div className="bg-white rounded-3xl p-6 shadow-[0_4px_30px_rgb(0,0,0,0.02)] border border-slate-100 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 rounded-2xl border border-indigo-100/30">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-lg">My Formed Teams</h3>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Active squads in database</p>
+                </div>
               </div>
-              <h3 className="font-bold text-slate-900 text-lg">My Formed Teams</h3>
+              <span className="text-xs bg-indigo-50 text-indigo-600 font-bold px-2.5 py-1 rounded-full border border-indigo-100/30">
+                {teams.length} Roster{teams.length !== 1 ? 's' : ''}
+              </span>
             </div>
             
             {teamsLoading ? (
-              <p className="text-slate-400 text-sm">Loading teams...</p>
+              <div className="py-8 text-center text-slate-400 text-sm">Loading team rosters...</div>
             ) : teams.length === 0 ? (
-              <div className="text-center py-6 border border-dashed border-gray-200 rounded-2xl bg-slate-50/50">
+              <div className="text-center py-10 border-2 border-dashed border-slate-150 rounded-2xl bg-slate-50/30">
                 <p className="text-slate-400 text-sm">No saved teams yet.</p>
                 <button
                   onClick={goToFindTeammates}
-                  className="text-xs text-indigo-600 font-bold hover:underline mt-1"
+                  className="text-xs text-indigo-600 font-bold hover:underline mt-2 flex items-center gap-1 mx-auto"
                 >
-                  Assemble your first team &rarr;
+                  Assemble your first team <ArrowRight size={12} />
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {teams.map(t => (
-                  <div key={t.id} className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                  <div key={t.id} className="p-5 bg-gradient-to-br from-slate-50/70 to-white border border-slate-100 rounded-2xl flex flex-col justify-between hover:shadow-lg hover:border-indigo-100 transition-all relative group">
                     <button
                       onClick={() => handleDeleteTeam(t.id)}
-                      className="absolute top-4 right-4 text-xs font-semibold text-red-500 hover:text-red-700 hover:underline transition-colors"
+                      className="absolute top-4 right-4 p-1.5 bg-white border border-slate-105 text-slate-400 hover:text-red-500 hover:border-red-100 rounded-xl transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                      title="Delete Team"
                     >
-                      Delete
+                      <Trash2 size={13} />
                     </button>
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-slate-900 pr-12 truncate text-sm">{t.team_name}</h4>
-                      <p className="text-[11px] text-slate-500 italic leading-relaxed pr-12 line-clamp-2">{t.description}</p>
+                    <div className="space-y-1.5">
+                      <h4 className="font-extrabold text-slate-800 pr-8 truncate text-sm tracking-tight">{t.team_name}</h4>
+                      <p className="text-[11px] text-slate-400 italic leading-relaxed pr-8 line-clamp-2">{t.description}</p>
                     </div>
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {t.members.length} Members
-                      </span>
-                      <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-2 py-0.5 rounded-lg">
+                    
+                    <div className="mt-5 flex items-center justify-between border-t border-slate-100/70 pt-3.5">
+                      <div className="flex items-center gap-2">
+                        {/* Overlapping Avatars */}
+                        <div className="flex -space-x-1.5 overflow-hidden">
+                          {t.members.slice(0, 4).map((m, idx) => (
+                            <div key={idx} className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-br from-indigo-500 to-purple-650 text-white font-bold text-[8px] flex items-center justify-center shadow-sm">
+                              {idx === 0 ? "You" : `M${idx}`}
+                            </div>
+                          ))}
+                          {t.members.length > 4 && (
+                            <div className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-slate-200 text-slate-600 font-bold text-[8px] flex items-center justify-center shadow-sm">
+                              +{t.members.length - 4}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                          {t.members.length} member{t.members.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      
+                      <span className="text-[10px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 px-2.5 py-1 rounded-xl shadow-sm shadow-indigo-500/10 tracking-tight">
                         {t.health_score}% Health
                       </span>
                     </div>
