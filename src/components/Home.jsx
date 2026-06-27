@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { API_BASE } from "../config";
 import { useAuth } from "../context/AuthContext";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   User, Search, Zap, CheckCircle2, ArrowRight, Star, Sparkles,
   AlertCircle, Github, Linkedin, Code, Heart, Briefcase, Trophy, Users, Trash2
@@ -63,6 +63,11 @@ const Home = ({ setActiveTab }) => {
   const [teams, setTeams] = useState([]);
   const [teamsLoading, setTeamsLoading] = useState(true);
 
+  // Custom Delete Modal States
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState(null);
+  const [deleteStatus, setDeleteStatus] = useState(null); // { type: 'success' | 'error', message: '...' }
+
   const fetchProfile = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/profile`, {
@@ -101,20 +106,29 @@ const Home = ({ setActiveTab }) => {
     fetchTeams();
   }, [token]);
 
-  const handleDeleteTeam = async (teamId) => {
-    if (!confirm("Are you sure you want to delete this team?")) return;
+  const triggerDeleteTeam = (teamId) => {
+    setTeamToDelete(teamId);
+    setDeleteStatus(null);
+    setShowDeleteModal(true);
+  };
+
+  const executeDeleteTeam = async () => {
+    if (!teamToDelete) return;
     try {
-      const res = await fetch(`${API_BASE}/api/teams/${teamId}`, {
+      const res = await fetch(`${API_BASE}/api/teams/${teamToDelete}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        setTeams(prev => prev.filter(t => t.id !== teamId));
+        setTeams(prev => prev.filter(t => t.id !== teamToDelete));
+        setShowDeleteModal(false);
+        setTeamToDelete(null);
       } else {
-        alert("Failed to delete team.");
+        setDeleteStatus({ type: 'error', message: "Failed to delete team." });
       }
     } catch (e) {
       console.error("Error deleting team", e);
+      setDeleteStatus({ type: 'error', message: "Error contacting the server." });
     }
   };
 
@@ -284,7 +298,7 @@ const Home = ({ setActiveTab }) => {
                   return (
                     <div key={t.id} className="p-5 bg-gradient-to-br from-slate-50/70 to-white border border-slate-100 rounded-2xl flex flex-col justify-between hover:shadow-lg hover:border-indigo-100 transition-all relative group">
                       <button
-                        onClick={() => handleDeleteTeam(t.id)}
+                        onClick={() => triggerDeleteTeam(t.id)}
                         className="absolute top-4 right-4 p-1.5 bg-white border border-slate-105 text-slate-400 hover:text-red-500 hover:border-red-100 rounded-xl transition-all shadow-sm opacity-0 group-hover:opacity-100"
                         title="Delete Team"
                       >
@@ -407,6 +421,75 @@ const Home = ({ setActiveTab }) => {
           </div>
         </div>
       </div>
+      {/* ─── Delete Confirmation Modal ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (!deleteStatus) setShowDeleteModal(false); }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-100 shadow-2xl relative z-10 space-y-6"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Delete Team</h3>
+                  <p className="text-xs text-slate-500">This action cannot be undone</p>
+                </div>
+              </div>
+
+              {deleteStatus ? (
+                <div className="space-y-4 py-2 text-center">
+                  <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center bg-red-50 text-red-600">
+                    <AlertCircle size={24} />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800">{deleteStatus.message}</p>
+                  <button
+                    onClick={() => { setShowDeleteModal(false); setDeleteStatus(null); }}
+                    className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    Are you sure you want to permanently delete this team roster from your dashboard?
+                  </p>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setShowDeleteModal(false)}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={executeDeleteTeam}
+                      className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
