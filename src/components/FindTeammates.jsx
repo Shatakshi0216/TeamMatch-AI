@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   User, School, Code, Briefcase, Star, Filter, X,
   Search, Github, Linkedin, Mail, Zap,
-  ChevronDown, ChevronUp, Users, RefreshCw, Phone, CheckCircle2
+  ChevronDown, ChevronUp, Users, RefreshCw, Phone, CheckCircle2, AlertCircle
 } from "lucide-react";
 
 // ─── Typedefs ────────────────────────────────────────────────────────────────
@@ -298,6 +298,10 @@ const FindTeammates = ({ suggestedOnly, onMessage, initialInterests }) => {
   const [showTeam, setShowTeam] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [tempTeamName, setTempTeamName] = useState("");
+  const [modalType, setModalType] = useState("auto"); // "auto" or "custom"
+  const [saveStatus, setSaveStatus] = useState(null); // { type: 'success' | 'error', message: '...' }
 
   const handleToggleSelect = useCallback((member) => {
     setSelectedMembers(prev => {
@@ -369,85 +373,92 @@ const FindTeammates = ({ suggestedOnly, onMessage, initialInterests }) => {
     finally { setTeamLoading(false); }
   };
 
-  const handleSaveTeam = async () => {
-    const teamName = prompt("Enter a name for your new team:");
-    if (!teamName || !teamName.trim()) return;
-
-    try {
-      const avgHealth = teamSuggestion.length > 0
-        ? teamSuggestion.reduce((acc, curr) => acc + (curr.matchPercentage || 0), 0) / teamSuggestion.length
-        : 80;
-
-      const memberIds = [parseInt(userId), ...teamSuggestion.map(t => t.user_id)];
-
-      const res = await fetch(`${API_BASE}/api/teams`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          team_name: teamName.trim(),
-          description: `AI Auto-built team for user #${userId}`,
-          health_score: parseFloat(avgHealth.toFixed(1)),
-          members: memberIds
-        })
-      });
-
-      if (res.ok) {
-        alert(`Team "${teamName.trim()}" successfully saved to your dashboard!`);
-      } else {
-        const err = await res.json();
-        alert(`Failed to save team: ${err.detail || "Server error"}`);
-      }
-    } catch (e) {
-      console.error(e);
-      alert("Error contacting the server.");
-    }
+  const handleSaveTeam = () => {
+    setModalType("auto");
+    setSaveStatus(null);
+    setTempTeamName("");
+    setShowSaveModal(true);
   };
 
-  const handleSaveCustomTeam = async () => {
-    const teamName = prompt("Enter a name for your custom team:");
-    if (!teamName || !teamName.trim()) return;
+  const handleSaveCustomTeam = () => {
+    setModalType("custom");
+    setSaveStatus(null);
+    setTempTeamName("");
+    setShowSaveModal(true);
+  };
+
+  const executeSaveTeam = async () => {
+    if (!tempTeamName.trim()) return;
 
     try {
-      const memberIds = [parseInt(userId), ...selectedMembers.map(m => m.user_id)];
+      let res;
+      if (modalType === "auto") {
+        const avgHealth = teamSuggestion.length > 0
+          ? teamSuggestion.reduce((acc, curr) => acc + (curr.matchPercentage || 0), 0) / teamSuggestion.length
+          : 80;
 
-      const resHealth = await fetch(`${API_BASE}/api/team-health`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ members: memberIds })
-      });
-      const healthData = await resHealth.json();
-      const finalHealth = healthData?.health?.health_score || 75;
+        const memberIds = [parseInt(userId), ...teamSuggestion.map(t => t.user_id)];
 
-      const res = await fetch(`${API_BASE}/api/teams`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          team_name: teamName.trim(),
-          description: `Custom team built with: ${selectedMembers.map(m => m.preferred_role).join(", ")}`,
-          health_score: parseFloat(finalHealth),
-          members: memberIds
-        })
-      });
+        res = await fetch(`${API_BASE}/api/teams`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            team_name: tempTeamName.trim(),
+            description: `AI Auto-built team for user #${userId}`,
+            health_score: parseFloat(avgHealth.toFixed(1)),
+            members: memberIds
+          })
+        });
+      } else {
+        const memberIds = [parseInt(userId), ...selectedMembers.map(m => m.user_id)];
+
+        const resHealth = await fetch(`${API_BASE}/api/team-health`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ members: memberIds })
+        });
+        const healthData = await resHealth.json();
+        const finalHealth = healthData?.health?.health_score || 75;
+
+        res = await fetch(`${API_BASE}/api/teams`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            team_name: tempTeamName.trim(),
+            description: `Custom team built with: ${selectedMembers.map(m => m.preferred_role).join(", ")}`,
+            health_score: parseFloat(finalHealth),
+            members: memberIds
+          })
+        });
+      }
 
       if (res.ok) {
-        alert(`Custom Team "${teamName.trim()}" saved successfully!`);
-        setSelectedMembers([]);
+        setSaveStatus({
+          type: "success",
+          message: `Team "${tempTeamName.trim()}" successfully saved to your dashboard!`
+        });
       } else {
         const err = await res.json();
-        alert(`Failed to save custom team: ${err.detail || "Server error"}`);
+        setSaveStatus({
+          type: "error",
+          message: `Failed to save team: ${err.detail || "Server error"}`
+        });
       }
     } catch (e) {
       console.error(e);
-      alert("Error contacting the server.");
+      setSaveStatus({
+        type: "error",
+        message: "Error connecting to the database server."
+      });
     }
   };
 
@@ -769,6 +780,92 @@ const FindTeammates = ({ suggestedOnly, onMessage, initialInterests }) => {
           )}
         </>
       )}
+
+      {/* ─── Save Team Modal ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showSaveModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { if (!saveStatus) setShowSaveModal(false); }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl p-6 max-w-md w-full border border-slate-100 shadow-2xl relative z-10 space-y-6"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Save Team Roster</h3>
+                  <p className="text-xs text-slate-500">Form your hackathon squad</p>
+                </div>
+              </div>
+
+              {saveStatus ? (
+                <div className="space-y-4 py-4 text-center">
+                  <div className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center ${
+                    saveStatus.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                  }`}>
+                    {saveStatus.type === 'success' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
+                  </div>
+                  <p className="text-sm font-semibold text-slate-800">{saveStatus.message}</p>
+                  <button
+                    onClick={() => {
+                      setShowSaveModal(false);
+                      setSaveStatus(null);
+                      setTempTeamName("");
+                      if (modalType === 'custom') setSelectedMembers([]);
+                    }}
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Team Name</label>
+                    <input
+                      type="text"
+                      value={tempTeamName}
+                      onChange={e => setTempTeamName(e.target.value)}
+                      placeholder="e.g. Code Crusaders, Alpha Pack"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setShowSaveModal(false)}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={executeSaveTeam}
+                      disabled={!tempTeamName.trim()}
+                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
+                    >
+                      Confirm Save
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
